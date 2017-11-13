@@ -333,8 +333,6 @@ namespace SS_OpenCV
             }
         }
 
-        
-
         public static void Mean(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo)
         {
             unsafe
@@ -717,12 +715,12 @@ namespace SS_OpenCV
             }
         }
 
-        public static void Mean_solutionC(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo)
+        public static void Mean_solutionC(Image<Bgr, byte> img, Image<Bgr, byte> imgCopy, int size)
         {
             unsafe
             {
                 MIplImage m = img.MIplImage;
-                MIplImage morigem = imgUndo.MIplImage;
+                MIplImage morigem = imgCopy.MIplImage;
                 int width = img.Width;
                 int height = img.Height;
                 int nChan = m.nChannels; // numero de canais 3
@@ -916,9 +914,20 @@ namespace SS_OpenCV
                     sumG += dataPtrAux[1];
                     sumR += dataPtrAux[2];
 
-                    dataPtr[0] = (byte)(Math.Round(sumB / 9.0));
-                    dataPtr[1] = (byte)(Math.Round(sumG / 9.0));
-                    dataPtr[2] = (byte)(Math.Round(sumR / 9.0));
+                    mediaB = sumB / 9.0;
+                    mediaG = sumG / 9.0;
+                    mediaR = sumR / 9.0;
+
+                    if (mediaB > 255) { mediaB = 255; }
+                    if (mediaG > 255) { mediaG = 255; }
+                    if (mediaR > 255) { mediaR = 255; }
+                    if (mediaB < 0) { mediaB = 0; }
+                    if (mediaG < 0) { mediaG = 0; }
+                    if (mediaR < 0) { mediaR = 0; }
+
+                    dataPtr[0] = (byte)(Math.Round(mediaB));
+                    dataPtr[1] = (byte)(Math.Round(mediaG));
+                    dataPtr[2] = (byte)(Math.Round(mediaR));
 
                     sum1B = sumB;
                     sum1G = sumG;
@@ -963,9 +972,6 @@ namespace SS_OpenCV
                             mediaG = Math.Round(sumG / 9.0);
                             mediaR = Math.Round(sumR / 9.0);
 
-                            //sumB = 0;
-                            //sumG = 0;
-                            //sumR = 0;
                             if (mediaB > 255) { mediaB = 255; }
                             if (mediaG > 255) { mediaG = 255; }
                             if (mediaR > 255) { mediaR = 255; }
@@ -975,44 +981,45 @@ namespace SS_OpenCV
                             dataPtr[0] = (byte)mediaB;
                             dataPtr[1] = (byte)mediaG;
                             dataPtr[2] = (byte)mediaR;
-                            dataPtr += nChan; //termina no pixel (width-1,height-2)
+                            dataPtr += nChan; //termina no pixel (width-1)
+                            
                             
                         }
 
                         dataPtr += 2 * nChan + padding; //avança para a próxima linha. Termina no pixel (1,height-1) CHECK
 
-                        sumB = sum1B;
-                        sumG = sum1G;
-                        sumR = sum1R;
+                        //sumB = sum1B;
+                        //sumG = sum1G;
+                        //sumR = sum1R;
 
                         dataPtrAux = (ydest - 1) * widthStep + dataPtrOrigem; //(0 , ydest-1)
-                        sumB -= dataPtrAux[0];
-                        sumG -= dataPtrAux[1];
-                        sumR -= dataPtrAux[2];
+                        sum1B -= dataPtrAux[0];
+                        sum1G -= dataPtrAux[1];
+                        sum1R -= dataPtrAux[2];
                         dataPtrAux = nChan + (ydest - 1) * widthStep + dataPtrOrigem; //(1 , ydest-1)
-                        sumB -= dataPtrAux[0];
-                        sumG -= dataPtrAux[1];
-                        sumR -= dataPtrAux[2];
+                        sum1B -= dataPtrAux[0];
+                        sum1G -= dataPtrAux[1];
+                        sum1R -= dataPtrAux[2];
                         dataPtrAux = 2 * nChan + (ydest - 1) * widthStep + dataPtrOrigem; //(2 , ydest-1)
-                        sumB -= dataPtrAux[0];
-                        sumG -= dataPtrAux[1];
-                        sumR -= dataPtrAux[2];
+                        sum1B -= dataPtrAux[0];
+                        sum1G -= dataPtrAux[1];
+                        sum1R -= dataPtrAux[2];
                         dataPtrAux = (ydest + 2) * widthStep + dataPtrOrigem; //(0 , ydest+1)
-                        sumB += dataPtrAux[0];
-                        sumG += dataPtrAux[1];
-                        sumR += dataPtrAux[2];
+                        sum1B += dataPtrAux[0];
+                        sum1G += dataPtrAux[1];
+                        sum1R += dataPtrAux[2];
                         dataPtrAux = nChan + (ydest + 2) * widthStep + dataPtrOrigem; // (1 , ydest+1)
-                        sumB += dataPtrAux[0];
-                        sumG += dataPtrAux[1];
-                        sumR += dataPtrAux[2];
+                        sum1B += dataPtrAux[0];
+                        sum1G += dataPtrAux[1];
+                        sum1R += dataPtrAux[2];
                         dataPtrAux = 2 * nChan + (ydest + 2) * widthStep + dataPtrOrigem; // (2 , ydest+1)
-                        sumB += dataPtrAux[0];
-                        sumG += dataPtrAux[1];
-                        sumR += dataPtrAux[2];
+                        sum1B += dataPtrAux[0];
+                        sum1G += dataPtrAux[1];
+                        sum1R += dataPtrAux[2];
 
-                        mediaB = Math.Round(sumB / 9.0);
-                        mediaG = Math.Round(sumG / 9.0);
-                        mediaR = Math.Round(sumR / 9.0);
+                        mediaB = Math.Round(sum1B / 9.0);
+                        mediaG = Math.Round(sum1G / 9.0);
+                        mediaR = Math.Round(sum1R / 9.0);
 
                         if (mediaB > 255) { mediaB = 255; }
                         if (mediaG > 255) { mediaG = 255; }
@@ -1024,9 +1031,7 @@ namespace SS_OpenCV
                         dataPtr[0] = (byte)mediaB;
                         dataPtr[1] = (byte)mediaG;
                         dataPtr[2] = (byte)mediaR;
-                        //dataPtr[0] = 0;
-                        //dataPtr[1] = 0;
-                        //dataPtr[2] = 0;
+                       
                         dataPtr += nChan;
                     }
                 }
@@ -1188,6 +1193,7 @@ namespace SS_OpenCV
                 }
             }
         }
+
         public static void Scale_point_xy(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo, float scaleFactor, int centerX, int centerY)
         {
             unsafe
@@ -1242,8 +1248,6 @@ namespace SS_OpenCV
                 }
             }
         }
-
-       
 
         public static void RedChannel(Image<Bgr, byte> img)
         {
@@ -1310,30 +1314,13 @@ namespace SS_OpenCV
                                 newG = (byte)(Math.Round(dataPtr[1] * contrast + brightness));
                                 newR = (byte)(Math.Round(dataPtr[2] * contrast + brightness));
 
-                            if(newB < 0)
-                            {
-                                newB = 0;
-                            }
-                            if (newG < 0)
-                            {
-                                newG = 0;
-                            }
-                            if (newR < 0)
-                            {
-                                newR = 0;
-                            }
-                            if (newB > 255)
-                            {
-                                newB = 255;
-                            }
-                            if (newG > 255)
-                            {
-                                newG = 255;
-                            }
-                            if (newR > 255)
-                            {
-                                newR = 255;
-                            }
+                            if (newB < 0) { newB = 0; }
+                            if (newG < 0) { newG = 0; }
+                            if (newR < 0) { newR = 0; }
+                            if (newB > 255) { newB = 255; }
+                            if (newG > 255) { newG = 255; }
+                            if (newR > 255) { newR = 255; }
+ 
                             dataPtr[0] = newB;
                             dataPtr[1] = newG;
                             dataPtr[2] = newR;
@@ -3475,8 +3462,6 @@ namespace SS_OpenCV
 
         }
 
-       
-
         public static void Diferentiation(Image<Bgr, byte> img, Image<Bgr, byte> imgCopy)
         {
 
@@ -3590,13 +3575,13 @@ namespace SS_OpenCV
 
                     // ------------------------------------------|||---------------------------------------
                     // 4º CANTO(0,height-1) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NA MARGEM M3)
-                    
-                    //// ------------------------------------------|||---------------------------------------
-                    //// FINALMENTE PROCESSAMOS AS MARGENS S/ CANTOS
-                    //// MARGEM SUPERIOR (M1) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NO INTERIOR S/MARGENS)
 
-                    //// ------------------------------------------|||---------------------------------------
-                    //// MARGEM LATERAL DIREITA (M2) + 2º CANTO
+                    // ------------------------------------------|||---------------------------------------
+                    // FINALMENTE PROCESSAMOS AS MARGENS S/ CANTOS
+                    // MARGEM SUPERIOR (M1) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NO INTERIOR S/MARGENS)
+
+                    // ------------------------------------------|||---------------------------------------
+                    // MARGEM LATERAL DIREITA (M2) + 2º CANTO
 
                     dataPtr -= (height-1)*widthStep;
                     //Pointer na imagem principal no pixel (width-1,0)
@@ -3687,6 +3672,223 @@ namespace SS_OpenCV
 
         }
 
+        public static void Roberts(Image<Bgr, byte> img, Image<Bgr, byte> imgCopy) {
+
+            unsafe
+            {
+                MIplImage m = img.MIplImage;
+                MIplImage morigem = imgCopy.MIplImage;
+                int width = img.Width;
+                int height = img.Height;
+                int nChan = m.nChannels; // numero de canais 3
+                int widthStep = m.widthStep;
+                int padding = m.widthStep - m.nChannels * m.width; // alinhamento (padding)
+                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
+                byte* dataPtrAux;
+                byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
+
+                int xdest = 0;
+                int ydest = 0;
+
+                double pixelAB = 0;
+                double pixelAG = 0;
+                double pixelAR = 0; //soma das componentes no interior
+                double pixelBB = 0;
+                double pixelBG = 0;
+                double pixelBR = 0;
+                double pixelCB = 0;
+                double pixelCG = 0;
+                double pixelCR = 0;
+                double pixelDB = 0;
+                double pixelDG = 0;
+                double pixelDR = 0;
+
+                double sumB = 0;
+                double sumG = 0;
+                double sumR = 0;
+
+                if (nChan == 3)
+                {
+                    // ------------------------------------------|||---------------------------------------
+                    //PROCESSAR O INTERIOR S/ MARGENS
+
+                    //pointer em (0,0)
+
+                    //percorre cada linha de pixeis
+                    for (ydest = 0; ydest < (height - 1); ydest++)
+
+                    {
+                        //percorre cada pixel de cada linha
+                        for (xdest = 0; xdest < (width - 1); xdest++)
+
+                        {
+
+                            dataPtrAux = xdest * nChan + ydest * widthStep + dataPtrOrigem;
+                            //Pointer no pixel (xdest, ydest) - A
+
+                            pixelAB = dataPtrAux[0];
+                            pixelAG = dataPtrAux[1];
+                            pixelAR = dataPtrAux[2];
+
+                            dataPtrAux += nChan;     //Pointer no pixel (xdest+1,ydest) - B
+
+                            pixelBB = dataPtrAux[0];
+                            pixelBG = dataPtrAux[1];
+                            pixelBR = dataPtrAux[2];
+
+                            dataPtrAux += widthStep - nChan;     //Pointer no pixel (xdest,ydest+1) - C
+
+                            pixelCB = dataPtrAux[0];
+                            pixelCG = dataPtrAux[1];
+                            pixelCR = dataPtrAux[2];
+
+                            dataPtrAux += nChan;  //Pointer no pixel (xdest+1,ydest+1) - D
+
+                            pixelDB = dataPtrAux[0];
+                            pixelDG = dataPtrAux[1];
+                            pixelDR = dataPtrAux[2];
+
+                            sumB = Math.Abs(pixelAB - pixelDB) + Math.Abs(pixelBB - pixelCB);
+                            sumG = Math.Abs(pixelAG - pixelDG) + Math.Abs(pixelBG - pixelCG);
+                            sumR = Math.Abs(pixelAR - pixelDR) + Math.Abs(pixelBR - pixelCR);
+
+
+                            if (sumB > 255) { sumB = 255; }
+                            if (sumG > 255) { sumG = 255; }
+                            if (sumR > 255) { sumR = 255; }
+
+                            dataPtr[0] = (byte)(Math.Round(sumB));
+                            dataPtr[1] = (byte)(Math.Round(sumG));
+                            dataPtr[2] = (byte)(Math.Round(sumR));
+
+                            //termina no pixel (width-1,height-2) CHECK
+                            dataPtr += nChan;
+
+
+                        }
+
+                        dataPtr += nChan + padding;
+                        // CONFIRMA-SE QUE ESTAMOS A PERCORRER BEM O INTERIROR
+                        //termina no pixel (0,height-1) CHECK
+
+                    }
+
+                    //------------------------------------------||| ---------------------------------------
+                    //PROCESSAR OS CANTOS
+
+                    //1º CANTO(0,0) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NO INTERIOR S/ MARGENS)
+
+                    //2º CANTO(width-1,0) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NA MARGEM M2)
+
+                    // ------------------------------------------|||---------------------------------------
+                    // 3º CANTO(width-1,height-1)
+
+                    dataPtr += (width - 1) * nChan;
+                    //Pointer na imagem principal no pixel (width-1,height-1)
+
+                    dataPtr[0] = 0;
+                    dataPtr[1] = 0;
+                    dataPtr[2] = 0;
+
+                    // ------------------------------------------|||---------------------------------------
+                    // 4º CANTO(0,height-1) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NA MARGEM M3)
+
+                    // ------------------------------------------|||---------------------------------------
+                    // FINALMENTE PROCESSAMOS AS MARGENS S/ CANTOS
+                    // MARGEM SUPERIOR (M1) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NO INTERIOR S/MARGENS)
+
+                    // ------------------------------------------|||---------------------------------------
+                    // MARGEM LATERAL DIREITA (M2) + 2º CANTO
+
+                    dataPtr -= (height - 1) * widthStep;
+                    //Pointer na imagem principal no pixel (width-1,0)
+
+                    //Pointer ao longo da coluna x=width-1
+                    for (ydest = 0; ydest < height - 1; ydest++)
+
+                    {
+                        dataPtrAux = ((width - 1) * nChan + ydest * widthStep + dataPtrOrigem);
+                        //ir ao pixel a ser processado - A
+
+                        pixelAB = dataPtrAux[0];
+                        pixelAG = dataPtrAux[1];
+                        pixelAR = dataPtrAux[2];
+
+                        dataPtrAux += widthStep;     //Pointer no pixel (1,height-1) - C
+
+                        pixelCB = dataPtrAux[0];
+                        pixelCG = dataPtrAux[1];
+                        pixelCR = dataPtrAux[2];
+
+                        sumB = 2*Math.Abs(pixelAB - pixelCB);
+                        sumG = 2*Math.Abs(pixelAG - pixelCG);
+                        sumR = 2*Math.Abs(pixelAR - pixelCR);
+
+                        if (sumB > 255) { sumB = 255; }
+                        if (sumG > 255) { sumG = 255; }
+                        if (sumR > 255) { sumR = 255; }
+
+                        dataPtr[0] = (byte)(Math.Round(sumB));
+                        dataPtr[1] = (byte)(Math.Round(sumG));
+                        dataPtr[2] = (byte)(Math.Round(sumR));
+
+                        dataPtr += widthStep;
+                        //temina quando dataPtr = (width-1, height-1)
+                    }
+
+                    // ------------------------------------------|||---------------------------------------
+                    // MARGEM INFERIOR (M3)
+
+                    dataPtr -= (width - 1) * nChan;
+                    //Pointer na imagem principal no pixel (1,height-1)
+
+                    //Pointer ao longo da linha y=height-1
+                    for (xdest = 0; xdest < width - 1; xdest++)
+
+                    {
+                        dataPtrAux = ((xdest) * nChan + (height - 1) * widthStep + dataPtrOrigem);
+                        //pixel a ser processado - A
+
+                        pixelAB = dataPtrAux[0];
+                        pixelAG = dataPtrAux[1];
+                        pixelAR = dataPtrAux[2];
+
+                        dataPtrAux += nChan;     //Pointer no pixel (xdest+1,ydest) - B
+
+                        pixelBB = dataPtrAux[0];
+                        pixelBG = dataPtrAux[1];
+                        pixelBR = dataPtrAux[2];
+
+                        sumB = 2*Math.Abs(pixelAB - pixelBB);
+                        sumG = 2*Math.Abs(pixelAG - pixelBG);
+                        sumR = 2*Math.Abs(pixelAR - pixelBR);
+
+                        if (sumB > 255) { sumB = 255; }
+                        if (sumG > 255) { sumG = 255; }
+                        if (sumR > 255) { sumR = 255; }
+
+                        dataPtr[0] = (byte)(Math.Round(sumB));
+                        dataPtr[1] = (byte)(Math.Round(sumG));
+                        dataPtr[2] = (byte)(Math.Round(sumR));
+
+                        dataPtr += nChan; //termina quando dataPtr = (width-1 ,height -1) CHECK
+
+                    }
+
+                    // ------------------------------------------|||---------------------------------------
+                    // MARGEM LATERAL ESQUERDA (M4) NÃO NECESSITA DE PROCESSAMENTO (ACONTECE NO INTERIOR S/MARGENS)
+
+
+                }
+
+
+
+
+            }
+
+
+        }
+
         public static int[] Histogram_Gray(Emgu.CV.Image<Bgr, byte> img)
         {
             unsafe
@@ -3733,11 +3935,114 @@ namespace SS_OpenCV
                     }
                     
                 }
+              
                 return histogram;
             }
             
 
               }
-    } 
+
+        public static int[] Histogram_RGB(Image<Bgr, byte> img)
+        {
+            unsafe
+            {
+                MIplImage m = img.MIplImage;
+                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
+                byte blue, green, red, gray;
+
+                int[] histogram = new int[256];
+                int width = img.Width;
+                int height = img.Height;
+                int nChan = m.nChannels;
+                int padding = m.widthStep - m.nChannels * m.width;
+                int x, y;
+
+                if (nChan == 3) // image in RGB
+                {
+                    //Array.Clear(histogram, 0, 256);
+                    for (y = 0; y < height; y++) //percorre todas as linhas
+                    {
+                        for (x = 0; x < width; x++) //percorre cada pixel de cada linha
+                        {
+                            //obtém as 3 componentes
+                            blue = dataPtr[0];
+                            green = dataPtr[1];
+                            red = dataPtr[2];
+
+                            // convert to gray
+                            gray = (byte)(Math.Round(((blue + green + red) / 3.0)));
+
+                            // store in the image
+                            dataPtr[0] = gray;
+                            dataPtr[1] = gray;
+                            dataPtr[2] = gray;
+
+                            histogram[gray]++;
+
+                            // advance the pointer to the next pixel
+                            dataPtr += nChan;
+                        }
+
+                        //at the end of the line advance the pointer by the aligment bytes (padding)
+                        dataPtr += padding;
+                    }
+
+                }
+                return histogram;
+            }
+        }
+
+        public static int[] Histogram_All(Image<Bgr, byte> img)
+        {
+            unsafe
+            {
+                MIplImage m = img.MIplImage;
+                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
+                byte blue, green, red, gray;
+
+                int[] histogram = new int[256];
+                int width = img.Width;
+                int height = img.Height;
+                int nChan = m.nChannels;
+                int padding = m.widthStep - m.nChannels * m.width;
+                int x, y;
+
+                if (nChan == 3) // image in RGB
+                {
+                    //Array.Clear(histogram, 0, 256);
+                    for (y = 0; y < height; y++) //percorre todas as linhas
+                    {
+                        for (x = 0; x < width; x++) //percorre cada pixel de cada linha
+                        {
+                            //obtém as 3 componentes
+                            blue = dataPtr[0];
+                            green = dataPtr[1];
+                            red = dataPtr[2];
+
+                            // convert to gray
+                            gray = (byte)(Math.Round(((blue + green + red) / 3.0)));
+
+                            // store in the image
+                            dataPtr[0] = gray;
+                            dataPtr[1] = gray;
+                            dataPtr[2] = gray;
+
+                            histogram[gray]++;
+
+                            // advance the pointer to the next pixel
+                            dataPtr += nChan;
+                        }
+
+                        //at the end of the line advance the pointer by the aligment bytes (padding)
+                        dataPtr += padding;
+                    }
+
+                }
+                return histogram;
+            }
+        }
+
+
+    }
 }
 

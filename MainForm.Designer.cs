@@ -51,27 +51,31 @@ namespace SS_OpenCV
             this.transformsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.translationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rotationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.nearestNeighbourToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.biLinearToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.zoomToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.nearestNeighbourToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.biLinearToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mouseCenteredZoomToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.filtersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.meanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.solutionAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.solutionBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.solutionCToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.nonUniformMeanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sobelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.diferentiationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.medianToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.robertsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.autoZoomToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.histogramToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.autoresToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.evalToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
             this.ImageViewer = new System.Windows.Forms.PictureBox();
-            this.nearestNeighbourToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.biLinearToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.solutionAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.solutionBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.solutionCToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.grayToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.rGBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.grayRGBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.ImageViewer)).BeginInit();
@@ -92,8 +96,8 @@ namespace SS_OpenCV
             this.evalToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(8, 3, 0, 3);
-            this.menuStrip1.Size = new System.Drawing.Size(991, 30);
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(8, 2, 0, 2);
+            this.menuStrip1.Size = new System.Drawing.Size(991, 28);
             this.menuStrip1.TabIndex = 2;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -243,6 +247,20 @@ namespace SS_OpenCV
             this.rotationToolStripMenuItem.Size = new System.Drawing.Size(236, 26);
             this.rotationToolStripMenuItem.Text = "Rotation";
             // 
+            // nearestNeighbourToolStripMenuItem1
+            // 
+            this.nearestNeighbourToolStripMenuItem1.Name = "nearestNeighbourToolStripMenuItem1";
+            this.nearestNeighbourToolStripMenuItem1.Size = new System.Drawing.Size(212, 26);
+            this.nearestNeighbourToolStripMenuItem1.Text = "Nearest-Neighbour";
+            this.nearestNeighbourToolStripMenuItem1.Click += new System.EventHandler(this.RotationToolStripMenuItem_Click);
+            // 
+            // biLinearToolStripMenuItem1
+            // 
+            this.biLinearToolStripMenuItem1.Name = "biLinearToolStripMenuItem1";
+            this.biLinearToolStripMenuItem1.Size = new System.Drawing.Size(212, 26);
+            this.biLinearToolStripMenuItem1.Text = "BiLinear";
+            this.biLinearToolStripMenuItem1.Click += new System.EventHandler(this.biLinearToolStripMenuItem1_Click);
+            // 
             // zoomToolStripMenuItem1
             // 
             this.zoomToolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -280,7 +298,8 @@ namespace SS_OpenCV
             this.nonUniformMeanToolStripMenuItem,
             this.sobelToolStripMenuItem,
             this.diferentiationToolStripMenuItem,
-            this.medianToolStripMenuItem});
+            this.medianToolStripMenuItem,
+            this.robertsToolStripMenuItem});
             this.filtersToolStripMenuItem.Name = "filtersToolStripMenuItem";
             this.filtersToolStripMenuItem.Size = new System.Drawing.Size(240, 26);
             this.filtersToolStripMenuItem.Text = "Filters";
@@ -294,6 +313,27 @@ namespace SS_OpenCV
             this.meanToolStripMenuItem.Name = "meanToolStripMenuItem";
             this.meanToolStripMenuItem.Size = new System.Drawing.Size(253, 26);
             this.meanToolStripMenuItem.Text = "Mean";
+            // 
+            // solutionAToolStripMenuItem
+            // 
+            this.solutionAToolStripMenuItem.Name = "solutionAToolStripMenuItem";
+            this.solutionAToolStripMenuItem.Size = new System.Drawing.Size(153, 26);
+            this.solutionAToolStripMenuItem.Text = "Solution A";
+            this.solutionAToolStripMenuItem.Click += new System.EventHandler(this.meanToolStripMenuItem_Click);
+            // 
+            // solutionBToolStripMenuItem
+            // 
+            this.solutionBToolStripMenuItem.Name = "solutionBToolStripMenuItem";
+            this.solutionBToolStripMenuItem.Size = new System.Drawing.Size(153, 26);
+            this.solutionBToolStripMenuItem.Text = "Solution B";
+            this.solutionBToolStripMenuItem.Click += new System.EventHandler(this.solutionBToolStripMenuItem_Click);
+            // 
+            // solutionCToolStripMenuItem
+            // 
+            this.solutionCToolStripMenuItem.Name = "solutionCToolStripMenuItem";
+            this.solutionCToolStripMenuItem.Size = new System.Drawing.Size(153, 26);
+            this.solutionCToolStripMenuItem.Text = "Solution C";
+            this.solutionCToolStripMenuItem.Click += new System.EventHandler(this.solutionCToolStripMenuItem_Click);
             // 
             // nonUniformMeanToolStripMenuItem
             // 
@@ -323,6 +363,13 @@ namespace SS_OpenCV
             this.medianToolStripMenuItem.Text = "Median";
             this.medianToolStripMenuItem.Click += new System.EventHandler(this.medianToolStripMenuItem_Click);
             // 
+            // robertsToolStripMenuItem
+            // 
+            this.robertsToolStripMenuItem.Name = "robertsToolStripMenuItem";
+            this.robertsToolStripMenuItem.Size = new System.Drawing.Size(253, 26);
+            this.robertsToolStripMenuItem.Text = "Roberts";
+            this.robertsToolStripMenuItem.Click += new System.EventHandler(this.robertsToolStripMenuItem_Click);
+            // 
             // autoZoomToolStripMenuItem
             // 
             this.autoZoomToolStripMenuItem.CheckOnClick = true;
@@ -333,10 +380,13 @@ namespace SS_OpenCV
             // 
             // histogramToolStripMenuItem
             // 
+            this.histogramToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.grayToolStripMenuItem1,
+            this.rGBToolStripMenuItem,
+            this.grayRGBToolStripMenuItem});
             this.histogramToolStripMenuItem.Name = "histogramToolStripMenuItem";
             this.histogramToolStripMenuItem.Size = new System.Drawing.Size(240, 26);
-            this.histogramToolStripMenuItem.Text = "Histogram Gray";
-            this.histogramToolStripMenuItem.Click += new System.EventHandler(this.histogramToolStripMenuItem_Click);
+            this.histogramToolStripMenuItem.Text = "Histogram";
             // 
             // autoresToolStripMenuItem
             // 
@@ -357,10 +407,10 @@ namespace SS_OpenCV
             this.panel1.AutoScroll = true;
             this.panel1.Controls.Add(this.ImageViewer);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 30);
+            this.panel1.Location = new System.Drawing.Point(0, 28);
             this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(991, 463);
+            this.panel1.Size = new System.Drawing.Size(991, 466);
             this.panel1.TabIndex = 6;
             // 
             // ImageViewer
@@ -374,46 +424,32 @@ namespace SS_OpenCV
             this.ImageViewer.TabStop = false;
             this.ImageViewer.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ImageViewer_MouseClick_1);
             // 
-            // nearestNeighbourToolStripMenuItem1
+            // grayToolStripMenuItem1
             // 
-            this.nearestNeighbourToolStripMenuItem1.Name = "nearestNeighbourToolStripMenuItem1";
-            this.nearestNeighbourToolStripMenuItem1.Size = new System.Drawing.Size(212, 26);
-            this.nearestNeighbourToolStripMenuItem1.Text = "Nearest-Neighbour";
-            this.nearestNeighbourToolStripMenuItem1.Click += new System.EventHandler(this.RotationToolStripMenuItem_Click);
+            this.grayToolStripMenuItem1.Name = "grayToolStripMenuItem1";
+            this.grayToolStripMenuItem1.Size = new System.Drawing.Size(181, 26);
+            this.grayToolStripMenuItem1.Text = "Gray";
+            this.grayToolStripMenuItem1.Click += new System.EventHandler(this.histogramToolStripMenuItem_Click);
             // 
-            // biLinearToolStripMenuItem1
+            // rGBToolStripMenuItem
             // 
-            this.biLinearToolStripMenuItem1.Name = "biLinearToolStripMenuItem1";
-            this.biLinearToolStripMenuItem1.Size = new System.Drawing.Size(212, 26);
-            this.biLinearToolStripMenuItem1.Text = "BiLinear";
-            this.biLinearToolStripMenuItem1.Click += new System.EventHandler(this.biLinearToolStripMenuItem1_Click);
+            this.rGBToolStripMenuItem.Name = "rGBToolStripMenuItem";
+            this.rGBToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
+            this.rGBToolStripMenuItem.Text = "RGB";
+            this.rGBToolStripMenuItem.Click += new System.EventHandler(this.rGBToolStripMenuItem_Click);
             // 
-            // solutionAToolStripMenuItem
+            // grayRGBToolStripMenuItem
             // 
-            this.solutionAToolStripMenuItem.Name = "solutionAToolStripMenuItem";
-            this.solutionAToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
-            this.solutionAToolStripMenuItem.Text = "Solution A";
-            this.solutionAToolStripMenuItem.Click += new System.EventHandler(this.meanToolStripMenuItem_Click);
-            // 
-            // solutionBToolStripMenuItem
-            // 
-            this.solutionBToolStripMenuItem.Name = "solutionBToolStripMenuItem";
-            this.solutionBToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
-            this.solutionBToolStripMenuItem.Text = "Solution B";
-            this.solutionBToolStripMenuItem.Click += new System.EventHandler(this.solutionBToolStripMenuItem_Click);
-            // 
-            // solutionCToolStripMenuItem
-            // 
-            this.solutionCToolStripMenuItem.Name = "solutionCToolStripMenuItem";
-            this.solutionCToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
-            this.solutionCToolStripMenuItem.Text = "Solution C";
-            this.solutionCToolStripMenuItem.Click += new System.EventHandler(this.solutionCToolStripMenuItem_Click);
+            this.grayRGBToolStripMenuItem.Name = "grayRGBToolStripMenuItem";
+            this.grayRGBToolStripMenuItem.Size = new System.Drawing.Size(181, 26);
+            this.grayRGBToolStripMenuItem.Text = "Gray + RGB";
+            this.grayRGBToolStripMenuItem.Click += new System.EventHandler(this.grayRGBToolStripMenuItem_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(991, 493);
+            this.ClientSize = new System.Drawing.Size(991, 494);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
@@ -484,6 +520,10 @@ namespace SS_OpenCV
         private System.Windows.Forms.ToolStripMenuItem solutionAToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem solutionBToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem solutionCToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem robertsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem grayToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem rGBToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem grayRGBToolStripMenuItem;
     }
 }
 

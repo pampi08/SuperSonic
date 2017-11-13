@@ -311,11 +311,11 @@ namespace SS_OpenCV
             if (img == null) // verify if the image is already opened
                 return;
             Cursor = Cursors.WaitCursor; // clock cursor 
-
+            int size = 0;
             //copy Undo Image
             imgUndo = img.Copy();
 
-            ImageClass.Mean_solutionC(img, imgUndo);
+            ImageClass.Mean_solutionC(img, imgCopy, size);
 
             ImageViewer.Image = img.Bitmap;
             ImageViewer.Refresh(); // refresh image on the screen
@@ -332,17 +332,63 @@ namespace SS_OpenCV
             //copy Undo Image
             imgUndo = img.Copy();
 
+            int[] histogram1 = new int[255];
+            histogram1[150] = 2000;
+            histogram1[151] = 2000;
+            histogram1[152] = 2000;
             int[] histogram = ImageClass.Histogram_Gray(img);
-            Histogram histoChart = new Histogram("Gray Histogram", histogram);
-            
+            Histogram histoChart = new Histogram("Gray Histogram", histogram , histogram1);
+            //histoChart.chart1.Series[0].Points.DataBindY
+            //            (histogram);
+            //histoChart.chart1.Series[0].Points.DataBindY
+            //            (histogram1);
             histoChart.ShowDialog();
-            
             ImageViewer.Image = img.Bitmap;
             ImageViewer.Refresh(); // refresh image on the screen
 
             Cursor = Cursors.Default; // normal cursor 
         }
-        
+        private void rGBToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (img == null) // verify if the image is already opened
+                return;
+            Cursor = Cursors.WaitCursor; // clock cursor 
+
+            //copy Undo Image
+            imgUndo = img.Copy();
+
+            int[] histogram = ImageClass.Histogram_RGB(img);
+            ////Histogram histoChart = new Histogram("Gray Histogram", histogram);
+
+            //histoChart.ShowDialog();
+
+            ImageViewer.Image = img.Bitmap;
+            ImageViewer.Refresh(); // refresh image on the screen
+
+            Cursor = Cursors.Default; // normal cursor 
+        }
+
+        private void grayRGBToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (img == null) // verify if the image is already opened
+                return;
+            Cursor = Cursors.WaitCursor; // clock cursor 
+
+            //copy Undo Image
+            imgUndo = img.Copy();
+
+            int[] histogram = ImageClass.Histogram_All(img);
+            //Histogram histoChart = new Histogram("Gray Histogram", histogram);
+
+            //histoChart.ShowDialog();
+
+            ImageViewer.Image = img.Bitmap;
+            ImageViewer.Refresh(); // refresh image on the screen
+
+            Cursor = Cursors.Default; // normal cursor 
+        }
+
+
         private void bWToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (img == null) // verify if the image is already opened
@@ -578,7 +624,24 @@ namespace SS_OpenCV
             Cursor = Cursors.Default; // normal cursor 
         }
 
-        
+        private void robertsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (img == null) // verify if the image is already opened
+                return;
+            Cursor = Cursors.WaitCursor; // clock cursor 
+
+            //copy Undo Image
+            imgCopy = img.Copy();
+
+            ImageClass.Roberts(img, imgCopy);
+
+            ImageViewer.Image = img.Bitmap;
+            ImageViewer.Refresh(); // refresh image on the screen
+
+            Cursor = Cursors.Default; // normal cursor 
+        }
+
+     
         private void medianToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (img == null) // verify if the image is already opened
