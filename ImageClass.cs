@@ -5,7 +5,11 @@ using Emgu.CV.Structure;
 using Emgu.CV;
 using System.Linq;
 using System.Diagnostics;
-
+using System.Drawing;
+using AForge.Imaging;
+using AForge.Math.Geometry;
+using AForge;
+using AForge.Imaging.Filters;
 
 namespace SS_OpenCV
 {
@@ -715,96 +719,102 @@ namespace SS_OpenCV
             }
         }
 
-        public static void Mean_solutionC(Image<Bgr, byte> img, Image<Bgr, byte> imgCopy, int size)
+        public static void Chess_Recognition(Image<Bgr, byte> img, Image<Bgr, byte> imgCopy, 
+            out Rectangle BD_Location, out string Angle, out string[,] Pieces)
         {
             unsafe
             {
+                Roberts(img, imgCopy);
+                ConvertToBW(img, 20);
                 MIplImage m = img.MIplImage;
-                MIplImage morigem = imgCopy.MIplImage;
+                //MIplImage morigem = imgUndo.MIplImage;
+                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
+                byte blue, green, red;
+                //byte* dataPtrAux;
+                //byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
                 int width = img.Width;
                 int height = img.Height;
-                int nChan = m.nChannels; // numero de canais 3
-                int widthStep = m.widthStep;
-                int padding = m.widthStep - m.nChannels * m.width; // alinhamento (padding)
-                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
-                byte* dataPtrAux;
-                byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
+                int nChan = m.nChannels; // number of channels - 3
+                int padding = m.widthStep - m.nChannels * m.width; // alinhament bytes (padding)
+                int x, y;
+                int x0 = 0;
+                int y0 = 0;
+                int x1 = 0;
+                int y1 = 0;
 
-                //int N = 3;
-                int xdest = 0;
-                int ydest = 0;
-                //int xorigem, yorigem;
-                uint sumB = 0;
-                uint sumG = 0;
-                uint sumR = 0;
+                Boolean xbreak = false;
+                bool canto1 = false;
+                bool canto2 = false;
+                int chessWidth = 0;
 
-                double sumCB = 0;
-                double sumCG = 0;
-                double sumCR = 0;
-
-                double sumM1B = 0;
-                double sumM1G = 0;
-                double sumM1R = 0;
-                double sumM2B = 0;     //soma das componentes nas margens
-                double sumM2G = 0;
-                double sumM2R = 0;
-                double sumM3B = 0;
-                double sumM3G = 0;
-                double sumM3R = 0;
-                double sumM4B = 0;
-                double sumM4G = 0;
-                double sumM4R = 0;
-
-                double mediaB = 0;
-                double mediaG = 0;
-                double mediaR = 0;
-                double counterSum = 0;
-
-                // ------------------------------------------|||---------------------------------------
-                //PROCESSAR O INTERIOR S/ MARGENS
-                if (nChan == 3)
+                if (nChan == 3) // image in RGB
                 {
-                    dataPtr += nChan + widthStep; //pointer da imagem no ponto (1,1)
+                    
 
-                    for (ydest = 1; ydest < height - 1; ydest++)
+                    for (y = 0; y < height; y++)
                     {
-
-                        for (xdest = 1; xdest < width - 1; xdest++)
+                        for (x = 0; x < width; x++)
                         {
-                            for (int i = ydest - 1; i <= ydest + 1; i++)
+                            blue = dataPtr[0];
+                            green = dataPtr[1];
+                            red = dataPtr[2];
+
+                            dataPtr[0] = 0;
+                            dataPtr[1] = 0;
+                            dataPtr[2] = 0;
+
+                            if (!canto1 && blue >= 250 && green >= 250 && green >= 250)
                             {
-                                for (int j = xdest - 1; j <= xdest + 1; j++)
-                                {
-                                    dataPtrAux = (i * widthStep + j * nChan + dataPtrOrigem);
-
-                                    sumB += dataPtrAux[0];
-                                    sumG += dataPtrAux[1];
-                                    sumR += dataPtrAux[2];
-
-
-                                    counterSum++;
-                                }
+                                x0 = x;
+                                y0 = y;
+                                canto1 = true;
+                                
+                                
+                            } if(canto1 && !canto2)
+                            {
+                                chessWidth++;
+                            }    
+                            
+                            if (canto1 && blue <= 10 && green <= 10 && green <= 10)
+                            {
+                                canto2 = true;
+                                x1 = x;
+                                y1 = y;
+                                xbreak = true;
+                                break;
                             }
-                            mediaB = Math.Round(sumB / counterSum);
-                            mediaG = Math.Round(sumG / counterSum);
-                            mediaR = Math.Round(sumR / counterSum);
-
-                            sumB = 0;
-                            sumG = 0;
-                            sumR = 0;
-
-                            dataPtr[0] = (byte)mediaB;
-                            dataPtr[1] = (byte)mediaG;
-                            dataPtr[2] = (byte)mediaR;
-                            dataPtr += nChan; //termina no pixel (width-1,height-2)
-                            counterSum = 0;
+                           
+                            // advance the pointer to the next pixel
+                            dataPtr += nChan;
+                            
                         }
-
-                        dataPtr += 2 * nChan + padding; //termina no pixel (1,height-1) CHECK
-
+                        if (xbreak)
+                        {
+                            xbreak = false;
+                            break;
+                        }
+                        //at the end of the line advance the pointer by the aligment bytes (padding)
+                        dataPtr += padding;
                     }
+                    Debug.WriteLine(x0 + " " + y0 + " " + x1 + " " + y1 + " " + chessWidth + " " + (x1-x0));
+                    //chessWidth = x1 - y1;
                 }
+                   
+                    string[,] tmp = new string[8, 8];
+
+                    for (int i = 0; i < 8; i++)
+                    {
+                        for (int j = 0; j < 8; j++)
+                        {
+                            tmp[j, i] = "K_w";
+                        }
+                    }
+               
+                Pieces = tmp;
+                Angle = 48.ToString();
+                BD_Location = new Rectangle(x0, y0, chessWidth-2, 1000);
             }
+            
         }
 
         public static void Mean_solutionB(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo)
@@ -1037,6 +1047,242 @@ namespace SS_OpenCV
                 }
             }
         }
+
+        public static void Mean_solutionC(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo, int size)
+        {
+            unsafe
+            {
+                MIplImage m = img.MIplImage;
+                MIplImage morigem = imgUndo.MIplImage;
+                int width = img.Width;
+                int height = img.Height;
+                int nChan = m.nChannels; // numero de canais 3
+                int widthStep = m.widthStep;
+                int padding = m.widthStep - m.nChannels * m.width; // alinhamento (padding)
+                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
+                byte* dataPtrAux;
+                byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
+
+                //int N = 3;
+                int xdest = 0;
+                int ydest = 0;
+                //int xorigem, yorigem;
+                uint sumB = 0;
+                uint sumG = 0;
+                uint sumR = 0;
+                uint sum1B = 0;
+                uint sum1G = 0;
+                uint sum1R = 0;
+
+                double sumCB = 0;
+                double sumCG = 0;
+                double sumCR = 0;
+
+                double sumM1B = 0;
+                double sumM1G = 0;
+                double sumM1R = 0;
+                double sumM2B = 0;     //soma das componentes nas margens
+                double sumM2G = 0;
+                double sumM2R = 0;
+                double sumM3B = 0;
+                double sumM3G = 0;
+                double sumM3R = 0;
+                double sumM4B = 0;
+                double sumM4G = 0;
+                double sumM4R = 0;
+
+                double mediaB = 0;
+                double mediaG = 0;
+                double mediaR = 0;
+                double counterSum = 0;
+
+                if (nChan == 3)
+                {
+                    // ------------------------------------------|||---------------------------------------
+                    //CALCULAR A MÉDIA PARA O 1º PIXEL DO INTERIOR
+
+                    dataPtrAux = dataPtrOrigem;     //Pointer para calculo da média no pixel (0,0)
+
+                    sumB = dataPtrAux[0];
+                    sumG = dataPtrAux[1];
+                    sumR = dataPtrAux[2];
+
+                    dataPtrAux += nChan;     //Pointer no pixel (1,0)
+
+                    sumB += dataPtrAux[0];
+                    sumG += dataPtrAux[1];
+                    sumR += dataPtrAux[2];
+
+                    dataPtrAux += nChan;     //Pointer no pixel (2,0)
+
+                    sumB += dataPtrAux[0];
+                    sumG += dataPtrAux[1];
+                    sumR += dataPtrAux[2];
+
+                    dataPtrAux += widthStep - 2 * nChan;     //Pointer no pixel (0,1)
+
+                    sumB += dataPtrAux[0];
+                    sumG += dataPtrAux[1];
+                    sumR += dataPtrAux[2];
+
+                    dataPtrAux += nChan;     //Pointer no pixel (1,1)
+
+                    sumCB += dataPtrAux[0];
+                    sumCG += dataPtrAux[1];
+                    sumCR += dataPtrAux[2];
+
+                    dataPtrAux += nChan;     //Pointer no pixel (2,1)
+
+                    sumB += dataPtrAux[0];
+                    sumG += dataPtrAux[1];
+                    sumR += dataPtrAux[2];
+
+                    dataPtrAux += widthStep - 2 * nChan;     //Pointer no pixel (0,2)
+
+                    sumB += dataPtrAux[0];
+                    sumG += dataPtrAux[1];
+                    sumR += dataPtrAux[2];
+
+                    dataPtrAux += nChan;     //Pointer no pixel (1,2)
+
+                    sumCB += dataPtrAux[0];
+                    sumCG += dataPtrAux[1];
+                    sumCR += dataPtrAux[2];
+
+                    dataPtrAux += nChan;     //Pointer no pixel (2,2)
+
+                    sumB += dataPtrAux[0];
+                    sumG += dataPtrAux[1];
+                    sumR += dataPtrAux[2];
+
+                    mediaB = sumB / 9.0;
+                    mediaG = sumG / 9.0;
+                    mediaR = sumR / 9.0;
+
+                    if (mediaB > 255) { mediaB = 255; }
+                    if (mediaG > 255) { mediaG = 255; }
+                    if (mediaR > 255) { mediaR = 255; }
+                    if (mediaB < 0) { mediaB = 0; }
+                    if (mediaG < 0) { mediaG = 0; }
+                    if (mediaR < 0) { mediaR = 0; }
+
+                    dataPtr[0] = (byte)(Math.Round(mediaB));
+                    dataPtr[1] = (byte)(Math.Round(mediaG));
+                    dataPtr[2] = (byte)(Math.Round(mediaR));
+
+                    sum1B = sumB;
+                    sum1G = sumG;
+                    sum1R = sumR;
+
+                    // ------------------------------------------|||---------------------------------------
+                    //PROCESSAR O INTERIOR S/ MARGENS
+
+                    dataPtr += 2 * nChan + widthStep; //pointer da imagem no ponto (2,1)
+
+                    xdest = 2;
+                    
+                        dataPtrAux = (xdest - 2) * nChan + dataPtrOrigem;
+                        sumB -= dataPtrAux[0];
+                        sumG -= dataPtrAux[1];
+                        sumR -= dataPtrAux[2];
+                        dataPtrAux = (xdest - 2) * nChan + widthStep + dataPtrOrigem;
+                        sumB -= dataPtrAux[0];
+                        sumG -= dataPtrAux[1];
+                        sumR -= dataPtrAux[2];
+                        dataPtrAux = (xdest - 2) * nChan + 2 * widthStep + dataPtrOrigem;
+                        sumB -= dataPtrAux[0];
+                        sumG -= dataPtrAux[1];
+                        sumR -= dataPtrAux[2];
+                        dataPtrAux = (xdest + 1) * nChan + dataPtrOrigem;
+                        sumB += dataPtrAux[0];
+                        sumG += dataPtrAux[1];
+                        sumR += dataPtrAux[2];
+                        dataPtrAux = (xdest + 1) * nChan + widthStep + dataPtrOrigem;
+                        sumB += dataPtrAux[0];
+                        sumG += dataPtrAux[1];
+                        sumR += dataPtrAux[2];
+                        dataPtrAux = (xdest + 1) * nChan + 2 * widthStep + dataPtrOrigem;
+                        sumB += dataPtrAux[0];
+                        sumG += dataPtrAux[1];
+                        sumR += dataPtrAux[2];
+
+                        mediaB = Math.Round(sumB / 9.0);
+                        mediaG = Math.Round(sumG / 9.0);
+                        mediaR = Math.Round(sumR / 9.0);
+
+                        if (mediaB > 255) { mediaB = 255; }
+                        if (mediaG > 255) { mediaG = 255; }
+                        if (mediaR > 255) { mediaR = 255; }
+                        if (mediaB < 0) { mediaB = 0; }
+                        if (mediaG < 0) { mediaG = 0; }
+                        if (mediaR < 0) { mediaR = 0; }
+
+                        dataPtr[0] = (byte)mediaB;
+                        dataPtr[1] = (byte)mediaG;
+                        dataPtr[2] = (byte)mediaR;
+
+                        dataPtr += nChan; //termina no pixel (width-1)
+
+
+                    
+
+                    for (ydest = 1; ydest < height - 1; ydest++)
+                    {
+
+                       
+
+                        dataPtr += 2 * nChan + padding; //avança para a próxima linha. Termina no pixel (1,height-1) CHECK
+
+                        //sumB = sum1B;
+                        //sumG = sum1G;
+                        //sumR = sum1R;
+
+                        dataPtrAux = (ydest - 1) * widthStep + dataPtrOrigem; //(0 , ydest-1)
+                        sum1B -= dataPtrAux[0];
+                        sum1G -= dataPtrAux[1];
+                        sum1R -= dataPtrAux[2];
+                        dataPtrAux = nChan + (ydest - 1) * widthStep + dataPtrOrigem; //(1 , ydest-1)
+                        sum1B -= dataPtrAux[0];
+                        sum1G -= dataPtrAux[1];
+                        sum1R -= dataPtrAux[2];
+                        dataPtrAux = 2 * nChan + (ydest - 1) * widthStep + dataPtrOrigem; //(2 , ydest-1)
+                        sum1B -= dataPtrAux[0];
+                        sum1G -= dataPtrAux[1];
+                        sum1R -= dataPtrAux[2];
+                        dataPtrAux = (ydest + 2) * widthStep + dataPtrOrigem; //(0 , ydest+1)
+                        sum1B += dataPtrAux[0];
+                        sum1G += dataPtrAux[1];
+                        sum1R += dataPtrAux[2];
+                        dataPtrAux = nChan + (ydest + 2) * widthStep + dataPtrOrigem; // (1 , ydest+1)
+                        sum1B += dataPtrAux[0];
+                        sum1G += dataPtrAux[1];
+                        sum1R += dataPtrAux[2];
+                        dataPtrAux = 2 * nChan + (ydest + 2) * widthStep + dataPtrOrigem; // (2 , ydest+1)
+                        sum1B += dataPtrAux[0];
+                        sum1G += dataPtrAux[1];
+                        sum1R += dataPtrAux[2];
+
+                        mediaB = Math.Round(sum1B / 9.0);
+                        mediaG = Math.Round(sum1G / 9.0);
+                        mediaR = Math.Round(sum1R / 9.0);
+
+                        if (mediaB > 255) { mediaB = 255; }
+                        if (mediaG > 255) { mediaG = 255; }
+                        if (mediaR > 255) { mediaR = 255; }
+                        if (mediaB < 0) { mediaB = 0; }
+                        if (mediaG < 0) { mediaG = 0; }
+                        if (mediaR < 0) { mediaR = 0; }
+
+                        dataPtr[0] = (byte)mediaB;
+                        dataPtr[1] = (byte)mediaG;
+                        dataPtr[2] = (byte)mediaR;
+
+                        dataPtr += nChan;
+                    }
+                }
+            }
+        }
+
         public static void Scale(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo, float scaleFactor)
         {
             unsafe
@@ -1344,9 +1590,9 @@ namespace SS_OpenCV
                 byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
                 byte blue, green, red;
 
-                int[] histogram = new int[256];
-                double[] probabilities = new double[histogram.Length];
-                double[] variance = new double[histogram.Length];
+                int[] hist = new int[256];
+                double[] probabilities = new double[hist.Length];
+                double[] variance = new double[hist.Length];
 
                 int width = img.Width;
                 int height = img.Height;
@@ -1356,17 +1602,24 @@ namespace SS_OpenCV
                 int x, y;
                 
                 int sum = 0;
-                double[] q1 = new double[histogram.Length];
-                double[] q2 = new double[histogram.Length];
+                int level = 0;
+                double max = 0;
+                double var = 0;
 
-                double[] miu1 = new double[histogram.Length];
-                double[] miu2 = new double[histogram.Length];
+                double q1 = 0;
+                double q2 = 0;
+                
+                double u1 = 0;
+                double u2 = 0;
 
-                double[] variance1 = new double[histogram.Length];
-                double[] variance2 = new double[histogram.Length];
+                //double[] miu1 = new double[histogram.Length];
+                //double[] miu2 = new double[histogram.Length];
 
-                double[] totalVari = new double[histogram.Length];
-                int threshold = 0;
+                //double[] variance1 = new double[histogram.Length];
+                //double[] variance2 = new double[histogram.Length];
+
+                //double[] totalVari = new double[histogram.Length];
+                //int threshold = 0;
 
                 if (nChan == 3) // image in RGB
                 {
@@ -1382,7 +1635,126 @@ namespace SS_OpenCV
                             //calcula o nível de cinzento
                             int gray = (int)Math.Round((blue + green + red) / 3.0);
 
-                            histogram[gray]++;
+                            hist[gray]++;
+
+                            sum++;
+                            //advance the pointer to the next pixel
+                            dataPtr += nChan;
+                            }
+
+                        //at the end of the line advance the pointer by the aligment bytes (padding)
+                        dataPtr += padding;
+                    }
+
+                    dataPtr -= ((width - 1) * nChan + (height - 1) * widthStep);
+                    
+                   
+                    u2 = 0;
+                    u1 = 0;
+
+                    for (int i = 2; i < hist.Length; i++)
+                    {
+                        probabilities[i] = hist[i] / (double)sum;
+                        u2 = u2 + i * probabilities[i];
+
+                        Debug.WriteLine(probabilities[i] + " " + hist[i]);
+
+                    }
+                    q1 = probabilities[0] + probabilities[1];
+                    q2 = 1 - q1;
+                    
+                    if(q1 > 0)
+                    {
+                        u1 = probabilities[1] / q1;
+                    }
+                    
+
+                    level = 1;
+
+                    if (u1 > 0)
+                    {
+                        max = (q1 * q2 * ((u1 / q1 - u2 / q2) * (u1 / q1 - u2 / q2)));
+                    }
+                    else
+                    {
+                        max = 0;
+                    }
+
+                    for (int i = 2; i < hist.Length; i++)
+                    {
+                        q1 = q1 + probabilities[i];
+
+                        if (q1 == 0)
+                        {
+                            continue; // nothing on the left side -skip
+                        }
+                        q2 = q2 - probabilities[i];
+
+                        if (q2 == 0)
+                        { 
+                            break; // nothing on the right side -finish
+                        }
+
+                        u1 = u1 + i * probabilities[i];
+                        u2 = u2 - i * probabilities[i];
+
+                        var = q1 * q2 * (((u1 / q1) - (u2 / q2)) * ((u1 / q1) - (u2 / q2)));
+
+                        if (var > max)
+                        {
+                            level = i;
+                            max = var;
+                        }
+                    }
+                    for (y = 0; y < height; y++)
+                    {
+                        for (x = 0; x < width; x++)
+                        {
+                            //obtém as 3 componentes
+                            blue = dataPtr[0];
+                            green = dataPtr[1];
+                            red = dataPtr[2];
+
+                            //calcula o nível de cinzento
+                            int gray = (int)Math.Round((blue + green + red) / 3.0);
+
+                            if (gray > level)
+                            {
+                                dataPtr[0] = 255; //PIXEL BRANCO
+                                dataPtr[1] = 255;
+                                dataPtr[2] = 255;
+                            }
+                            else
+                            {
+                                dataPtr[0] = 0; //PIXEL PRETO
+                                dataPtr[1] = 0;
+                                dataPtr[2] = 0;
+                            }
+
+
+                            // avança o pointer para o pixel anterior
+                            dataPtr += nChan;
+
+                        }
+
+                        //no início da linha salta o padding para o fim da linha acima
+                        dataPtr += padding;
+                    }
+
+
+                    //for (y = 0; y < height; y++)
+                    //{
+                    //    for (x = 0; x < width; x++)
+                    //    {
+                    //        //obtém as 3 componentes
+                    //        blue = dataPtr[0];
+                    //        green = dataPtr[1];
+                    //        red = dataPtr[2];
+
+                    //        //calcula o nível de cinzento
+                    //        int gray = (int)Math.Round((blue + green + red) / 3.0);
+
+                    //        histogram[gray]++;
 
                             //if (gray > i)
                             //{
@@ -1399,95 +1771,62 @@ namespace SS_OpenCV
 
 
                             // advance the pointer to the next pixel
-                            dataPtr += nChan;
-                            sum++;
-                        }
+                    //        dataPtr += nChan;
+                    //        sum++;
+                    //    }
 
-                        //at the end of the line advance the pointer by the aligment bytes (padding)
-                        dataPtr += padding;
-                    }
-                    
-                    //calcula a probabilidade para cada nivel de cinzento
-                    for (int i = 0; i < histogram.Length; i++)
-                    {
-                        probabilities[i] = (histogram[i]/(double)sum);
-                    }
-                    sum = 0;
-                    //calcular q1/2, miu1/2, variance1/2 e totalVari para cada threshold t
-                    for (int t = 0; t < histogram.Length; t++)
-                    {
-                        //somas as probabilidades de 0 até t
-                        for (int i = 0; i <= t; i++)
-                        {
-                            q1[t] += probabilities[i];
-                        }
-                        //somas as probabilidades de t+1 até 255
-                        for (int i = 255; i >= t + 1; i--)
-                        {
-                            q2[t] += probabilities[i];
-                        }
-                        //calcula miu1(t)
-                        for (int i = 0; i <= t; i++)
-                        {
-                            miu1[t] += (i * probabilities[i]) / q1[t];
-                        }
-                        //calcula miu2(t)
-                        for (int i = 255; i >= t + 1; i--)
-                        {
-                            miu2[t] += (i * probabilities[i]) / q2[t];
-                        }
-                        for (int i = 0; i <= t; i++)
-                        {
-                            variance1[t] += (((miu1[t] - i) * (miu1[t] - i)) * probabilities[i]) / q1[t];
-                        }
-                        for (int i = 255; i >= t + 1; i--)
-                        {
-                            variance2[t] += (((miu2[t] - i) * (miu2[t] - i)) * probabilities[i]) / q2[t];
-                        }
-                        totalVari[t] = q1[t] * variance1[t] + q2[t] * variance2[t];
+                    //    //at the end of the line advance the pointer by the aligment bytes (padding)
+                    //    dataPtr += padding;
+                    //}
 
-                       
-
-                    }
-                    threshold = Array.IndexOf(totalVari, totalVari.Min());
-
-                    dataPtr -= ((height - 1)*widthStep + (width-1)*nChan);
-
-                    for (y = 0; y < height; y++)
-                    {
-                        for (x = 0; x < width; x++)
-                        {
-                            //obtém as 3 componentes
-                            blue = dataPtr[0];
-                            green = dataPtr[1];
-                            red = dataPtr[2];
-
-                            //calcula o nível de cinzento
-                            int gray = (int)Math.Round((blue + green + red) / 3.0);
-                            
-                            if (gray > threshold)
-                            {
-                                dataPtr[0] = 255; //PIXEL BRANCO
-                                dataPtr[1] = 255;
-                                dataPtr[2] = 255;
-                            }
-                            else
-                            {
-                                dataPtr[0] = 0; //PIXEL PRETO
-                                dataPtr[1] = 0;
-                                dataPtr[2] = 0;
-                            }
+                    //        //calcula a probabilidade para cada nivel de cinzento
+                    //        for (int i = 0; i < histogram.Length; i++)
+                    //        {
+                    //            probabilities[i] = (histogram[i]/(double)sum);
+                    //        }
+                    //        sum = 0;
+                    //        //calcular q1/2, miu1/2, variance1/2 e totalVari para cada threshold t
+                    //        for (int t = 0; t < histogram.Length; t++)
+                    //        {
+                    //            //somas as probabilidades de 0 até t
+                    //            for (int i = 0; i <= t; i++)
+                    //            {
+                    //                q1[t] += probabilities[i];
+                    //            }
+                    //            //somas as probabilidades de t+1 até 255
+                    //            for (int i = 255; i >= t + 1; i--)
+                    //            {
+                    //                q2[t] += probabilities[i];
+                    //            }
+                    //            //calcula miu1(t)
+                    //            for (int i = 0; i <= t; i++)
+                    //            {
+                    //                miu1[t] += (i * probabilities[i]) / q1[t];
+                    //            }
+                    //            //calcula miu2(t)
+                    //            for (int i = 255; i >= t + 1; i--)
+                    //            {
+                    //                miu2[t] += (i * probabilities[i]) / q2[t];
+                    //            }
+                    //            for (int i = 0; i <= t; i++)
+                    //            {
+                    //                variance1[t] += (((miu1[t] - i) * (miu1[t] - i)) * probabilities[i]) / q1[t];
+                    //            }
+                    //            for (int i = 255; i >= t + 1; i--)
+                    //            {
+                    //                variance2[t] += (((miu2[t] - i) * (miu2[t] - i)) * probabilities[i]) / q2[t];
+                    //            }
+                    //            totalVari[t] = q1[t] * variance1[t] + q2[t] * variance2[t];
 
 
-                            // avança o pointer para o pixel anterior
-                            dataPtr += nChan;
-                          
-                        }
 
-                        //no início da linha salta o padding para o fim da linha acima
-                        dataPtr += padding;
-                    }
-                }    
+                    //        }
+                    //        threshold = Array.IndexOf(totalVari, totalVari.Min());
+
+                    //        dataPtr -= ((height - 1)*widthStep + (width-1)*nChan);
+
+                    //        
+                }
             }
         }
 

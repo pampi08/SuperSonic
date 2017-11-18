@@ -2,6 +2,15 @@
 using System.Windows.Forms;
 using Emgu.CV;
 using Emgu.CV.Structure;
+using System.Drawing;
+using AForge.Imaging;
+using System.Text;
+using Emgu.CV.Util;
+using Emgu.CV.CvEnum;
+using System.Diagnostics;
+using System.Collections.Generic;
+
+
 
 namespace SS_OpenCV
 {
@@ -641,7 +650,146 @@ namespace SS_OpenCV
             Cursor = Cursors.Default; // normal cursor 
         }
 
-     
+        private void chessRecognitionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (img == null) // verify if the image is already opened
+                return;
+            Cursor = Cursors.WaitCursor; // clock cursor 
+
+            //copy Undo Image
+            imgUndo = img.Copy();
+            Color red = Color.Red;
+            Pen p = new Pen(red);
+
+            //ImageClass.Chess_Recognition(img, imgUndo, out Rectangle BD_Location, out string Angle,
+            // out string[,] Pieces);
+            //Graphics g = Graphics.FromImage(img.Bitmap);
+            //g.DrawRectangle(p, BD_Location);
+
+            HoughLineTransformation lineTransform = new HoughLineTransformation();
+            // apply Hough line transofrm
+            lineTransform.ProcessImage(img.Bitmap);
+            Bitmap houghLineImage = lineTransform.ToBitmap();
+            // get lines using relative intensity
+            HoughLine[] lines = lineTransform.GetLinesByRelativeIntensity(0.5);
+            Image<Bgr, Byte> lineImage = img.CopyBlank();
+            foreach (HoughLine line in lines)
+            {
+                lineImage.Draw(line, new Bgr(Color.Green), 2);
+                ImageViewer.Image = lineImage.Bitmap;
+            }
+
+
+
+            //Convert the image to gray and remove noise
+            Mat uimage = new Mat();
+            
+                //CvInvoke.cvCvtColor(img, uimage, COLOR_CONVERSION.BGR2GRAY);
+                Mat pyrDown = new Mat();
+                //CvInvoke.cvPyrDown(uimage, pyrDown, 0);
+                //CvInvoke.cvPyrUp(pyrDown, uimage, 0);
+            
+
+            
+            
+
+            //#region Canny and edge detection
+            //Mat cannyEdges = new Mat();
+            //IntPtr lineMatrix = img.CopyBlank();
+            //LineSegment2D[] lines = null;
+            //Image<Bgr, Byte> lineImage;
+            // lineImage = img.CopyBlank();
+            //    double dCannyThreLinking = 120.0;
+            //double dCannyThres = 170.0;
+            //CvInvoke.cvCanny(uimage, cannyEdges, dCannyThres, dCannyThreLinking,1);
+            //double x = 0;
+            
+            //CvInvoke.cvHoughLines2(cannyEdges,
+            //    lineMatrix,  HOUGH_TYPE.CV_HOUGH_PROBABILISTIC,  x, //Distance resolution in pixel-related units
+            //    Math.PI / 45.0, //Angle resolution measured in radians.
+            //    20, //threshold
+               
+            //    600,300); //gap between lines
+               
+                //foreach (LineSegment2D line in lines)
+                    
+            
+
+    //        #region Find Triangle and Rectangles
+    //        List<Triangle2DF> triangleList = new List<Triangle2DF>();
+    //        List<RotatedRect> boxList = new List<RotatedRect>();
+    //        Image<Bgr, Byte> triangleRectImage;
+    //        private void fnFindTriangleRect()
+    //        {
+    //            triangleRectImage = img.CopyBlank();
+    //            using (VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint())
+    //            {
+    //                CvInvoke.FindContours(cannyEdges, contours, null, RetrType.List, ChainApproxMethod.ChainApproxSimple);
+    //                int count = contours.Size;
+    //                for (int i = 0; i < count; i++)
+    //                {
+    //                    using (VectorOfPoint contour = contours[i])
+    //                    using (VectorOfPoint approxContour = new VectorOfPoint())
+    //                    {
+    //                        CvInvoke.ApproxPolyDP(contour, approxContour, CvInvoke.ArcLength(contour, true) * 0.05, true);
+    //                        if (CvInvoke.ContourArea(approxContour, false) > 250) //only consider contour with area > 250
+    //                        {
+    //                            if (approxContour.Size == 3) //The contour has 3 vertices, is a triangle
+    //                            {
+    //                                Point[] pts = approxContour.ToArray();
+    //                                triangleList.Add(new Triangle2DF(pts[0], pts[1], pts[2]));
+    //                            }
+    //                            else if (approxContour.Size == 4) // The contour has 4 vertices
+    //                            {
+    //                                #region Determine if all the angles in the contours are within [80,100] degree
+    //                                bool isRectangle = true;
+    //                                Point[] pts = approxContour.ToArray();
+    //                                LineSegment2D[] edges = PointCollection.PolyLine(pts, true);
+    //                                for (int j = 0; j < edges.Length; j++)
+    //                                {
+    //                                    double dAngle = Math.Abs(edges[(j + 1) % edges.Length].GetExteriorAngleDegree(edges[j]));
+    //                                    if (dAngle < 80 || dAngle > 100)
+    //                                    {
+    //                                        isRectangle = false;
+    //                                        break;
+    //                                    }
+    //                                }
+    //                                #endregion
+    //                                if (isRectangle) boxList.Add(CvInvoke.MinAreaRect(approxContour));
+    //                            }
+    //                        }
+    //                    }
+    //                }
+
+    //            }
+    //            foreach (Triangle2DF triangle in triangleList)
+    //            {
+    //                triangleRectImage.Draw(triangle, new Bgr(Color.DarkBlue), 2);
+    //            }
+    //            foreach (RotatedRect box in boxList)
+    //                triangleRectImage.Draw(box, new Bgr(Color.Red), 2);
+    //            ImgBox_Triangle_Rect.Image = triangleRectImage;
+    //        }
+           //#endregion
+
+
+    //    }
+    //}
+
+
+    //ImageViewer.Image = img.Bitmap;
+            
+            ImageViewer.Refresh(); // refresh image on the screen
+
+            Cursor = Cursors.Default; // normal cursor 
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            FormBorderStyle = FormBorderStyle.Sizable;
+            WindowState = FormWindowState.Maximized;
+        }
+
         private void medianToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (img == null) // verify if the image is already opened
