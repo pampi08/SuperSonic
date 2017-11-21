@@ -1,0 +1,827 @@
+public static void Median(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo)
+        {
+            unsafe
+            {
+
+                MIplImage m = img.MIplImage;
+                MIplImage morigem = imgUndo.MIplImage;
+                int width = img.Width;
+                int height = img.Height;
+                int nChan = m.nChannels; // numero de canais 3
+                int widthStep = m.widthStep;
+                int padding = widthStep - nChan * width; // alinhamento (padding)
+                byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
+                byte* dataPtrAux;
+                byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
+                int xdest, ydest, i;
+                //double pB = 0, pG = 0, pR = 0;
+                //double medianxB = 0, difxG = 0, difxR = 0;
+                //double medianB = 0, difyG = 0, difyR = 0;
+                //double medianMB = 0, difMG = 0, difMR = 0;
+                byte*[] pixelptr = new byte*[9];
+                //dataPtrAux = dataPtrOrigem;
+                //pixelptr[0] = dataPtrAux; //posição (1,1)
+                //pixelptr[1] = dataPtrAux + nChan; //posição (1,2)
+                //pixelptr[2] = dataPtrAux + 2 * nChan; //posição (1,3)
+                //pixelptr[3] = dataPtrAux + widthStep; //posição (2,1)
+                //pixelptr[4] = dataPtrAux + widthStep + nChan; //posição (2,2)
+                //pixelptr[5] = dataPtrAux + widthStep + 2 * nChan; //posição (2,3)
+                //pixelptr[6] = dataPtrAux + 2 * widthStep; //posição (3,1)
+                //pixelptr[7] = dataPtrAux + 2 * widthStep + nChan; //posição (3,2)
+                //pixelptr[8] = dataPtrAux + 2 * widthStep + 2 * nChan; //posição (3,3)
+                double diff = 0;
+                double d0 = 0, d1 = 0, d2 = 0, d3 = 0, d4 = 0, d5 = 0, d6 = 0, d7 = 0, d8 = 0, d9 = 0;
+                double minH = 0;
+                dataPtr = dataPtr + nChan + widthStep; //começa no pixel (1,1)
+                if (nChan == 3)
+                {
+                    //INTERIOR (SEM MARGENS)
+                    for (ydest = 0; ydest < (height - 1); ydest++)
+                    {
+                        for (xdest = 0; xdest < (width - 1); xdest++)
+                        {
+
+                            dataPtrAux = dataPtrOrigem + nChan * (xdest) + widthStep * (ydest);
+                            pixelptr[0] = dataPtrAux; //posição (1,1)
+                            pixelptr[1] = dataPtrAux + nChan; //posição (1,2)
+                            pixelptr[2] = dataPtrAux + 2 * nChan; //posição (1,3)
+                            pixelptr[3] = dataPtrAux + widthStep; //posição (2,1)
+                            pixelptr[4] = dataPtrAux + widthStep + nChan; //posição (2,2) == pixel da posicao dataPtr que vai ser alterado
+                            pixelptr[5] = dataPtrAux + widthStep + 2 * nChan; //posição (2,3)
+                            pixelptr[6] = dataPtrAux + 2 * widthStep; //posição (3,1)
+                            pixelptr[7] = dataPtrAux + 2 * widthStep + nChan; //posição (3,2)
+                            pixelptr[8] = dataPtrAux + 2 * widthStep + 2 * nChan; //posição (3,3)
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[1][0]) + Math.Abs(pixelptr[0][1] - pixelptr[1][1]) + Math.Abs(pixelptr[0][2] - pixelptr[1][2]);
+                            d1 = diff;
+                            d2 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[2][0]) + Math.Abs(pixelptr[0][1] - pixelptr[2][1]) + Math.Abs(pixelptr[0][2] - pixelptr[2][2]);
+                            d1 += diff;
+                            d3 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[3][0]) + Math.Abs(pixelptr[0][1] - pixelptr[3][1]) + Math.Abs(pixelptr[0][2] - pixelptr[3][2]);
+                            d1 += diff;
+                            d4 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[4][0]) + Math.Abs(pixelptr[0][1] - pixelptr[4][1]) + Math.Abs(pixelptr[0][2] - pixelptr[4][2]);
+                            d1 += diff;
+                            d5 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[5][0]) + Math.Abs(pixelptr[0][1] - pixelptr[5][1]) + Math.Abs(pixelptr[0][2] - pixelptr[5][2]);
+                            d1 += diff;
+                            d6 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[6][0]) + Math.Abs(pixelptr[0][1] - pixelptr[6][1]) + Math.Abs(pixelptr[0][2] - pixelptr[6][2]);
+                            d1 += diff;
+                            d7 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[7][0]) + Math.Abs(pixelptr[0][1] - pixelptr[7][1]) + Math.Abs(pixelptr[0][2] - pixelptr[7][2]);
+                            d1 += diff;
+                            d8 = diff;
+                            diff = Math.Abs(pixelptr[0][0] - pixelptr[8][0]) + Math.Abs(pixelptr[0][1] - pixelptr[8][1]) + Math.Abs(pixelptr[0][2] - pixelptr[8][2]); //d1 completo
+                            d1 += diff;
+                            d9 = diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[2][0]) + Math.Abs(pixelptr[1][1] - pixelptr[2][1]) + Math.Abs(pixelptr[1][2] - pixelptr[2][2]);
+                            d2 += diff;
+                            d3 += diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[3][0]) + Math.Abs(pixelptr[1][1] - pixelptr[3][1]) + Math.Abs(pixelptr[1][2] - pixelptr[3][2]);
+                            d2 += diff;
+                            d4 += diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[4][0]) + Math.Abs(pixelptr[1][1] - pixelptr[4][1]) + Math.Abs(pixelptr[1][2] - pixelptr[4][2]);
+                            d2 += diff;
+                            d5 += diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[5][0]) + Math.Abs(pixelptr[1][1] - pixelptr[5][1]) + Math.Abs(pixelptr[1][2] - pixelptr[5][2]);
+                            d2 += diff;
+                            d6 += diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[6][0]) + Math.Abs(pixelptr[1][1] - pixelptr[6][1]) + Math.Abs(pixelptr[1][2] - pixelptr[6][2]);
+                            d2 += diff;
+                            d7 += diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[7][0]) + Math.Abs(pixelptr[1][1] - pixelptr[7][1]) + Math.Abs(pixelptr[1][2] - pixelptr[7][2]);
+                            d2 += diff;
+                            d8 += diff;
+                            diff = Math.Abs(pixelptr[1][0] - pixelptr[8][0]) + Math.Abs(pixelptr[1][1] - pixelptr[8][1]) + Math.Abs(pixelptr[1][2] - pixelptr[8][2]); //d2 completo
+                            d2 += diff;
+                            d9 += diff;
+                            diff = Math.Abs(pixelptr[2][0] - pixelptr[3][0]) + Math.Abs(pixelptr[2][1] - pixelptr[3][1]) + Math.Abs(pixelptr[2][2] - pixelptr[3][2]);
+                            d3 += diff;
+                            d4 += diff;
+                            diff = Math.Abs(pixelptr[2][0] - pixelptr[4][0]) + Math.Abs(pixelptr[2][1] - pixelptr[4][1]) + Math.Abs(pixelptr[2][2] - pixelptr[4][2]);
+                            d3 += diff;
+                            d5 += diff;
+                            diff = Math.Abs(pixelptr[2][0] - pixelptr[5][0]) + Math.Abs(pixelptr[2][1] - pixelptr[5][1]) + Math.Abs(pixelptr[2][2] - pixelptr[5][2]);
+                            d3 += diff;
+                            d6 += diff;
+                            diff = Math.Abs(pixelptr[2][0] - pixelptr[6][0]) + Math.Abs(pixelptr[2][1] - pixelptr[6][1]) + Math.Abs(pixelptr[2][2] - pixelptr[6][2]);
+                            d3 += diff;
+                            d7 += diff;
+                            diff = Math.Abs(pixelptr[2][0] - pixelptr[7][0]) + Math.Abs(pixelptr[2][1] - pixelptr[7][1]) + Math.Abs(pixelptr[2][2] - pixelptr[7][2]);
+                            d3 += diff;
+                            d8 += diff;
+                            diff = Math.Abs(pixelptr[2][0] - pixelptr[8][0]) + Math.Abs(pixelptr[2][1] - pixelptr[8][1]) + Math.Abs(pixelptr[2][2] - pixelptr[8][2]); //d3 completo
+                            d3 += diff;
+                            d9 += diff;
+                            diff = Math.Abs(pixelptr[3][0] - pixelptr[4][0]) + Math.Abs(pixelptr[3][1] - pixelptr[4][1]) + Math.Abs(pixelptr[3][2] - pixelptr[4][2]);
+                            d4 += diff;
+                            d5 += diff;
+                            diff = Math.Abs(pixelptr[3][0] - pixelptr[5][0]) + Math.Abs(pixelptr[3][1] - pixelptr[5][1]) + Math.Abs(pixelptr[3][2] - pixelptr[5][2]);
+                            d4 += diff;
+                            d6 += diff;
+                            diff = Math.Abs(pixelptr[3][0] - pixelptr[6][0]) + Math.Abs(pixelptr[3][1] - pixelptr[6][1]) + Math.Abs(pixelptr[3][2] - pixelptr[6][2]);
+                            d4 += diff;
+                            d7 += diff;
+                            diff = Math.Abs(pixelptr[3][0] - pixelptr[7][0]) + Math.Abs(pixelptr[3][1] - pixelptr[7][1]) + Math.Abs(pixelptr[3][2] - pixelptr[7][2]);
+                            d4 += diff;
+                            d8 += diff;
+                            diff = Math.Abs(pixelptr[3][0] - pixelptr[8][0]) + Math.Abs(pixelptr[3][1] - pixelptr[8][1]) + Math.Abs(pixelptr[3][2] - pixelptr[8][2]); //d4 completo
+                            d4 += diff;
+                            d9 += diff;
+                            diff = Math.Abs(pixelptr[4][0] - pixelptr[5][0]) + Math.Abs(pixelptr[4][1] - pixelptr[5][1]) + Math.Abs(pixelptr[4][2] - pixelptr[5][2]);
+                            d5 += diff;
+                            d6 += diff;
+                            diff = Math.Abs(pixelptr[4][0] - pixelptr[6][0]) + Math.Abs(pixelptr[4][1] - pixelptr[6][1]) + Math.Abs(pixelptr[4][2] - pixelptr[6][2]);
+                            d5 += diff;
+                            d7 += diff;
+                            diff = Math.Abs(pixelptr[4][0] - pixelptr[7][0]) + Math.Abs(pixelptr[4][1] - pixelptr[7][1]) + Math.Abs(pixelptr[4][2] - pixelptr[7][2]);
+                            d5 += diff;
+                            d8 += diff;
+                            diff = Math.Abs(pixelptr[4][0] - pixelptr[8][0]) + Math.Abs(pixelptr[4][1] - pixelptr[8][1]) + Math.Abs(pixelptr[4][2] - pixelptr[8][2]); //d5 completo 
+                            d5 += diff;
+                            d9 += diff;
+                            diff = Math.Abs(pixelptr[5][0] - pixelptr[6][0]) + Math.Abs(pixelptr[5][1] - pixelptr[6][1]) + Math.Abs(pixelptr[5][2] - pixelptr[6][2]);
+                            d6 += diff;
+                            d7 += diff;
+                            diff = Math.Abs(pixelptr[5][0] - pixelptr[7][0]) + Math.Abs(pixelptr[5][1] - pixelptr[7][1]) + Math.Abs(pixelptr[5][2] - pixelptr[7][2]);
+                            d6 += diff;
+                            d8 += diff;
+                            diff = Math.Abs(pixelptr[5][0] - pixelptr[8][0]) + Math.Abs(pixelptr[5][1] - pixelptr[8][1]) + Math.Abs(pixelptr[5][2] - pixelptr[8][2]); //d6 completo
+                            d6 += diff;
+                            d9 += diff;
+                            diff = Math.Abs(pixelptr[6][0] - pixelptr[7][0]) + Math.Abs(pixelptr[6][1] - pixelptr[7][1]) + Math.Abs(pixelptr[6][2] - pixelptr[7][2]);
+                            d7 += diff;
+                            d8 += diff;
+                            diff = Math.Abs(pixelptr[6][0] - pixelptr[8][0]) + Math.Abs(pixelptr[6][1] - pixelptr[8][1]) + Math.Abs(pixelptr[6][2] - pixelptr[8][2]); //d7 completo
+                            d7 += diff;
+                            d9 += diff;
+                            diff = Math.Abs(pixelptr[7][0] - pixelptr[8][0]) + Math.Abs(pixelptr[7][1] - pixelptr[8][1]) + Math.Abs(pixelptr[7][2] - pixelptr[8][2]); //d8 e d9 completo
+                            d8 += diff;
+                            d9 += diff;
+                            minH = Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(d1, d2), d3), d4), d5), d6), d7), d8), d9);
+                            if (minH == d9)
+                            {
+                                dataPtr[0] = pixelptr[8][0];
+                                dataPtr[1] = pixelptr[8][1];
+                                dataPtr[2] = pixelptr[8][2];
+                            }
+                            else if (minH == d8)
+                            {
+                                dataPtr[0] = pixelptr[7][0];
+                                dataPtr[1] = pixelptr[7][1];
+                                dataPtr[2] = pixelptr[7][2];
+                            }
+                            else if (minH == d7)
+                            {
+                                dataPtr[0] = pixelptr[6][0];
+                                dataPtr[1] = pixelptr[6][1];
+                                dataPtr[2] = pixelptr[6][2];
+                            }
+                            else if (minH == d6)
+                            {
+                                dataPtr[0] = pixelptr[5][0];
+                                dataPtr[1] = pixelptr[5][1];
+                                dataPtr[2] = pixelptr[5][2];
+                            }
+                            else if (minH == d5)
+                            {
+                                dataPtr[0] = pixelptr[4][0];
+                                dataPtr[1] = pixelptr[4][1];
+                                dataPtr[2] = pixelptr[4][2];
+                            }
+                            else if (minH == d4)
+                            {
+                                dataPtr[0] = pixelptr[3][0];
+                                dataPtr[1] = pixelptr[3][1];
+                                dataPtr[2] = pixelptr[3][2];
+                            }
+                            else if (minH == d3)
+                            {
+                                dataPtr[0] = pixelptr[2][0];
+                                dataPtr[1] = pixelptr[2][1];
+                                dataPtr[2] = pixelptr[2][2];
+                            }
+                            else if (minH == d2)
+                            {
+                                dataPtr[0] = pixelptr[1][0];
+                                dataPtr[1] = pixelptr[1][1];
+                                dataPtr[2] = pixelptr[1][2];
+                            }
+                            else
+                            {
+                                dataPtr[0] = pixelptr[0][0];
+                                dataPtr[1] = pixelptr[0][1];
+                                dataPtr[2] = pixelptr[0][2];
+                            }
+                            dataPtr += nChan; //pixel seguinte
+                        }
+
+                        dataPtr += padding + nChan;
+                    }
+                     //CANTO INFERIOR ESQUERDO
+                    dataPtrAux = dataPtrOrigem + widthStep * (height - 1);
+                    dataPtr = dataPtr - widthStep - nChan;
+
+                    pixelptr[1] = dataPtrAux - widthStep; //posição (1,1)  posição (1,2)
+                    pixelptr[2] = pixelptr[1] + nChan; //posição (1,3)
+                    pixelptr[4] = dataPtrAux; //posição (2,1) //posição (2,2) //posição (3,1) //posição (3,2)
+                    pixelptr[5] = dataPtrAux + nChan; //posição (2,3) //posição (3,3)
+
+                    diff = Math.Abs(pixelptr[1][0] - pixelptr[2][0]) + Math.Abs(pixelptr[1][1] - pixelptr[2][1]) + Math.Abs(pixelptr[1][2] - pixelptr[2][2]);
+                    d1 = diff; //pixel (0) 2
+                    d2 = 2 * diff; //pixel 0 1
+                    diff = Math.Abs(pixelptr[1][0] - pixelptr[4][0]) + Math.Abs(pixelptr[1][1] - pixelptr[4][1]) + Math.Abs(pixelptr[1][2] - pixelptr[4][2]);
+                    d1 += 4 * diff; //pixel 3 4 6 7 
+                    d4 = 2 * diff; //pixel 0 1 (3 6 7)
+                    diff = Math.Abs(pixelptr[1][0] - pixelptr[5][0]) + Math.Abs(pixelptr[1][1] - pixelptr[5][1]) + Math.Abs(pixelptr[1][2] - pixelptr[5][2]);
+                    d1 += 2 * diff; //pixel 5 e 8
+                    d5 = 2 * diff; //pixel 0 1 (8)
+                    diff = Math.Abs(pixelptr[2][0] - pixelptr[4][0]) + Math.Abs(pixelptr[2][1] - pixelptr[4][1]) + Math.Abs(pixelptr[2][2] - pixelptr[4][2]);
+                    d2 += 4 * diff; //pixel 3 4 6 7 
+                    d4 += diff; //pixel 2
+                    diff = Math.Abs(pixelptr[2][0] - pixelptr[5][0]) + Math.Abs(pixelptr[2][1] - pixelptr[5][1]) + Math.Abs(pixelptr[2][2] - pixelptr[5][2]);
+                    d2 += 2 * diff; //pixel 5 8
+                    d5 += diff; //pixel 2
+                    diff = Math.Abs(pixelptr[4][0] - pixelptr[5][0]) + Math.Abs(pixelptr[4][1] - pixelptr[5][1]) + Math.Abs(pixelptr[4][2] - pixelptr[5][2]);
+                    d4 += 2 * diff; // pixel 5 8
+                    d5 += 4 * diff; //pixel 3 4 6 7
+
+                    minH = Math.Min(Math.Min(Math.Min(d1, d2), d4), d5);
+                    if (minH == d5)
+                    {
+                        dataPtr[0] = pixelptr[5][0];
+                        dataPtr[1] = pixelptr[5][1];
+                        dataPtr[2] = pixelptr[5][2];
+                    }
+                    else if (minH == d4)
+                    {
+                        dataPtr[0] = pixelptr[4][0];
+                        dataPtr[1] = pixelptr[4][1];
+                        dataPtr[2] = pixelptr[4][2];
+                    }
+                    else if (minH == d2)
+                    {
+                        dataPtr[0] = pixelptr[2][0];
+                        dataPtr[1] = pixelptr[2][1];
+                        dataPtr[2] = pixelptr[2][2];
+                    }
+                    else if (minH == d1)
+                    {
+                        dataPtr[0] = pixelptr[1][0];
+                        dataPtr[1] = pixelptr[1][1];
+                        dataPtr[2] = pixelptr[1][2];
+                    }
+
+                    //MARGEM INFERIOR
+
+                    for (xdest = 0; xdest < (width - 1); xdest++)
+                    {
+                        dataPtr += nChan;
+                        dataPtrAux = dataPtrOrigem + nChan * (xdest) + widthStep * (height - 2); //penultima linha
+                        pixelptr[0] = dataPtrAux; //posição (1,1)
+                        pixelptr[1] = dataPtrAux + nChan; //posição (1,2)
+                        pixelptr[2] = dataPtrAux + 2 * nChan; //posição (1,3)
+                        pixelptr[3] = dataPtrAux + widthStep; //posição (2,1) (3,1)
+                        pixelptr[4] = dataPtrAux + widthStep + nChan; //posição (2,2) (3,2)
+                        pixelptr[5] = dataPtrAux + widthStep + 2 * nChan; //posição (2,3) (3,3)
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[1][0]) + Math.Abs(pixelptr[0][1] - pixelptr[1][1]) + Math.Abs(pixelptr[0][2] - pixelptr[1][2]);
+                        d1 = diff; //pixel 1
+                        d2 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[2][0]) + Math.Abs(pixelptr[0][1] - pixelptr[2][1]) + Math.Abs(pixelptr[0][2] - pixelptr[2][2]);
+                        d1 += diff; //pixel 2
+                        d3 = diff; //pixel 1
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[3][0]) + Math.Abs(pixelptr[0][1] - pixelptr[3][1]) + Math.Abs(pixelptr[0][2] - pixelptr[3][2]);
+                        d1 += 2 * diff; //pixel 3 6
+                        d4 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[4][0]) + Math.Abs(pixelptr[0][1] - pixelptr[4][1]) + Math.Abs(pixelptr[0][2] - pixelptr[4][2]);
+                        d1 += 2 * diff; //pixel 4 7
+                        d5 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[5][0]) + Math.Abs(pixelptr[0][1] - pixelptr[5][1]) + Math.Abs(pixelptr[0][2] - pixelptr[5][2]);
+                        d1 += 2 * diff; //pixel 5 8
+                        d6 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[2][0]) + Math.Abs(pixelptr[1][1] - pixelptr[2][1]) + Math.Abs(pixelptr[1][2] - pixelptr[2][2]);
+                        d2 += diff; //pixel 2
+                        d3 += diff; //pixel 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[3][0]) + Math.Abs(pixelptr[1][1] - pixelptr[3][1]) + Math.Abs(pixelptr[1][2] - pixelptr[3][2]);
+                        d2 += 2 * diff; //pixel 3 6
+                        d4 += diff; //pixel 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[4][0]) + Math.Abs(pixelptr[1][1] - pixelptr[4][1]) + Math.Abs(pixelptr[1][2] - pixelptr[4][2]);
+                        d2 += 2 * diff; //pixel 4 7
+                        d5 += diff; //pixel 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[5][0]) + Math.Abs(pixelptr[1][1] - pixelptr[5][1]) + Math.Abs(pixelptr[1][2] - pixelptr[5][2]);
+                        d2 += 2 * diff; //pixel 5 8
+                        d6 += diff; //pixel 1
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[3][0]) + Math.Abs(pixelptr[2][1] - pixelptr[3][1]) + Math.Abs(pixelptr[2][2] - pixelptr[3][2]);
+                        d3 += 2 * diff;  //pixel 3 6
+                        d4 += diff; // pixel 2
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[4][0]) + Math.Abs(pixelptr[2][1] - pixelptr[4][1]) + Math.Abs(pixelptr[2][2] - pixelptr[4][2]);
+                        d3 += 2 * diff; //pixel 4 7
+                        d5 += diff; //pixel 2
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[5][0]) + Math.Abs(pixelptr[2][1] - pixelptr[5][1]) + Math.Abs(pixelptr[2][2] - pixelptr[5][2]);
+                        d3 += 2 * diff; //pixel 5 8
+                        d6 += diff; //pixel 2
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[4][0]) + Math.Abs(pixelptr[3][1] - pixelptr[4][1]) + Math.Abs(pixelptr[3][2] - pixelptr[4][2]);
+                        d4 += 2 * diff; //pixel 4 7
+                        d5 += 2 * diff; //pixel 3 6
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[5][0]) + Math.Abs(pixelptr[3][1] - pixelptr[5][1]) + Math.Abs(pixelptr[3][2] - pixelptr[5][2]);
+                        d4 += 2 * diff; //pixel 5 8
+                        d6 += 2 * diff; // pixel 3 6
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[5][0]) + Math.Abs(pixelptr[4][1] - pixelptr[5][1]) + Math.Abs(pixelptr[4][2] - pixelptr[5][2]);
+                        d5 += 2 * diff; //pixel 5 8
+                        d6 += 2 * diff; //pixel 4 7
+
+                        minH = Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(d1, d2), d3), d4), d5), d6);
+                        if (minH == d6)
+                        {
+                            dataPtr[0] = pixelptr[5][0];
+                            dataPtr[1] = pixelptr[5][1];
+                            dataPtr[2] = pixelptr[5][2];
+                        }
+                        else if (minH == d5)
+                        {
+                            dataPtr[0] = pixelptr[4][0];
+                            dataPtr[1] = pixelptr[4][1];
+                            dataPtr[2] = pixelptr[4][2];
+                        }
+                        else if (minH == d4)
+                        {
+                            dataPtr[0] = pixelptr[3][0];
+                            dataPtr[1] = pixelptr[3][1];
+                            dataPtr[2] = pixelptr[3][2];
+                        }
+                        else if (minH == d3)
+                        {
+                            dataPtr[0] = pixelptr[2][0];
+                            dataPtr[1] = pixelptr[2][1];
+                            dataPtr[2] = pixelptr[2][2];
+                        }
+                        else if (minH == d2)
+                        {
+                            dataPtr[0] = pixelptr[1][0];
+                            dataPtr[1] = pixelptr[1][1];
+                            dataPtr[2] = pixelptr[1][2];
+                        }
+                        else
+                        {
+                            dataPtr[0] = pixelptr[0][0];
+                            dataPtr[1] = pixelptr[0][1];
+                            dataPtr[2] = pixelptr[0][2];
+
+                        }
+                    }
+                    //CANTO INFERIOR DIREITO
+                    //dataPtr já está no sitio certo
+                    dataPtrAux = dataPtrOrigem + widthStep * (height - 1) + nChan * (width - 1);
+                    pixelptr[1] = dataPtrAux - widthStep; //posição (1,1)  posição (1,2)
+                    pixelptr[0] = pixelptr[1] - nChan; //posição (1,3)
+                    pixelptr[4] = dataPtrAux; //posição (2,1) //posição (2,2) //posição (3,1) //posição (3,2)
+                    pixelptr[3] = dataPtrAux - nChan; //posição (2,3) //posição (3,3)
+
+                    diff = Math.Abs(pixelptr[0][0] - pixelptr[1][0]) + Math.Abs(pixelptr[0][1] - pixelptr[1][1]) + Math.Abs(pixelptr[0][2] - pixelptr[1][2]);
+                    d0 = 2 * diff; //pixel 1 2
+                    d1 = diff; //pixel 0 
+                    diff = Math.Abs(pixelptr[0][0] - pixelptr[3][0]) + Math.Abs(pixelptr[0][1] - pixelptr[3][1]) + Math.Abs(pixelptr[0][2] - pixelptr[3][2]);
+                    d0 += 2 * diff; //pixel 3 6
+                    d3 = diff; //pixel 0 
+                    diff = Math.Abs(pixelptr[0][0] - pixelptr[4][0]) + Math.Abs(pixelptr[0][1] - pixelptr[4][1]) + Math.Abs(pixelptr[0][2] - pixelptr[4][2]);
+                    d0 += 4 * diff; //pixel 4 5 7 8
+                    d4 = diff; //pixel 0
+                    diff = Math.Abs(pixelptr[1][0] - pixelptr[3][0]) + Math.Abs(pixelptr[1][1] - pixelptr[3][1]) + Math.Abs(pixelptr[1][2] - pixelptr[3][2]);
+                    d1 += 2 * diff; //pixel 3 6 
+                    d3 += 2 * diff; //pixel 1 2
+                    diff = Math.Abs(pixelptr[1][0] - pixelptr[4][0]) + Math.Abs(pixelptr[1][1] - pixelptr[4][1]) + Math.Abs(pixelptr[1][2] - pixelptr[4][2]);
+                    d1 += 4 * diff; //pixel 4 5 7 8
+                    d4 += 2 * diff; //pixel 1 2
+                    diff = Math.Abs(pixelptr[3][0] - pixelptr[4][0]) + Math.Abs(pixelptr[3][1] - pixelptr[4][1]) + Math.Abs(pixelptr[3][2] - pixelptr[4][2]);
+                    d3 += 4 * diff; //pixel 4 5 7 8
+                    d4 += 2 * diff; //pixel 3 6
+                    minH = Math.Min(Math.Min(Math.Min(d0, d1), d3), d4);
+                    if (minH == d4)
+                    {
+                        dataPtr[0] = pixelptr[4][0];
+                        dataPtr[1] = pixelptr[4][1];
+                        dataPtr[2] = pixelptr[4][2];
+                    }
+                    else if (minH == d3)
+                    {
+                        dataPtr[0] = pixelptr[3][0];
+                        dataPtr[1] = pixelptr[3][1];
+                        dataPtr[2] = pixelptr[3][2];
+                    }
+                    else if (minH == d1)
+                    {
+                        dataPtr[0] = pixelptr[1][0];
+                        dataPtr[1] = pixelptr[1][1];
+                        dataPtr[2] = pixelptr[1][2];
+                    }
+                    else if (minH == d0)
+                    {
+                        dataPtr[0] = pixelptr[0][0];
+                        dataPtr[1] = pixelptr[0][1];
+                        dataPtr[2] = pixelptr[0][2];
+                    }
+                    //CANTO SUPERIOR DIREITO
+                    dataPtr -= (height - 1) * widthStep;
+                    dataPtrAux = dataPtrOrigem + nChan * (width - 1);
+                    pixelptr[3] = dataPtrAux - nChan; //posição (2,1)  posição (1,2)
+                    pixelptr[4] = dataPtrAux; //posição (1,2) //posição (1,3) //posição (2,2) //posição (2,3)
+                    pixelptr[6] = dataPtrAux - nChan + widthStep; //posição (3,1) 
+                    pixelptr[7] = dataPtrAux + widthStep; //posição (3,2) //posição (3,3)
+
+                    diff = Math.Abs(pixelptr[3][0] - pixelptr[4][0]) + Math.Abs(pixelptr[3][1] - pixelptr[4][1]) + Math.Abs(pixelptr[3][2] - pixelptr[4][2]);
+                    d3 = 4 * diff; //pixel 1 2 4 5
+                    d4 = 2 * diff; //pixel 0 3
+                    diff = Math.Abs(pixelptr[3][0] - pixelptr[6][0]) + Math.Abs(pixelptr[3][1] - pixelptr[6][1]) + Math.Abs(pixelptr[3][2] - pixelptr[6][2]);
+                    d3 += diff; //pixel 6
+                    d6 = 2*diff; //pixel 0 3
+                    diff = Math.Abs(pixelptr[3][0] - pixelptr[7][0]) + Math.Abs(pixelptr[3][1] - pixelptr[7][1]) + Math.Abs(pixelptr[3][2] - pixelptr[7][2]);
+                    d3 += 2 * diff; //pixel 7 8
+                    d7 = 2 * diff; //pixel 0 3
+                    diff = Math.Abs(pixelptr[4][0] - pixelptr[6][0]) + Math.Abs(pixelptr[4][1] - pixelptr[6][1]) + Math.Abs(pixelptr[4][2] - pixelptr[6][2]);
+                    d4 += diff; //pixel 6 
+                    d6 += 4 * diff; //pixel 1 2 4 5
+                    diff = Math.Abs(pixelptr[4][0] - pixelptr[7][0]) + Math.Abs(pixelptr[4][1] - pixelptr[7][1]) + Math.Abs(pixelptr[4][2] - pixelptr[7][2]);
+                    d4 += 2 * diff; //pixel 7 8
+                    d7 += 4 * diff; //pixel 1 2 4 5
+                    diff = Math.Abs(pixelptr[6][0] - pixelptr[7][0]) + Math.Abs(pixelptr[6][1] - pixelptr[7][1]) + Math.Abs(pixelptr[6][2] - pixelptr[7][2]);
+                    d6 += 2 * diff; //pixel 7 8
+                    d7 += diff; //pixel 6
+                    minH = Math.Min(Math.Min(Math.Min(d7, d6), d3), d4);
+                    if (minH == d4)
+                    {
+                        dataPtr[0] = pixelptr[4][0];
+                        dataPtr[1] = pixelptr[4][1];
+                        dataPtr[2] = pixelptr[4][2];
+                    }
+                    else if (minH == d3)
+                    {
+                        dataPtr[0] = pixelptr[3][0];
+                        dataPtr[1] = pixelptr[3][1];
+                        dataPtr[2] = pixelptr[3][2];
+                    }
+                    else if (minH == d6)
+                    {
+                        dataPtr[0] = pixelptr[6][0];
+                        dataPtr[1] = pixelptr[6][1];
+                        dataPtr[2] = pixelptr[6][2];
+                    }
+                    else if (minH == d0)
+                    {
+                        dataPtr[0] = pixelptr[7][0];
+                        dataPtr[1] = pixelptr[7][1];
+                        dataPtr[2] = pixelptr[7][2];
+                    }
+
+                    //MARGEM DIREITA
+                    
+                    for (ydest = 0; ydest < (height - 1); ydest++)
+                    {
+                        dataPtr += widthStep;
+                        dataPtrAux = dataPtrOrigem + nChan * (width - 1) + widthStep * (ydest); //penultima linha
+                        pixelptr[0] = dataPtrAux - nChan; //posição (1,1)
+                        pixelptr[1] = dataPtrAux; //posição (1,2)
+                        pixelptr[3] = dataPtrAux + widthStep - nChan; //posição (2,1)
+                        pixelptr[4] = dataPtrAux + widthStep; //posição (2,2) (2,3)
+                        pixelptr[6] = dataPtrAux + 2 * widthStep - nChan; //posição (3,1)
+                        pixelptr[7] = dataPtrAux + 2 * widthStep; //posição (3,2) (3,3)
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[1][0]) + Math.Abs(pixelptr[0][1] - pixelptr[1][1]) + Math.Abs(pixelptr[0][2] - pixelptr[1][2]);
+                        d0 = 2 * diff; //pixel 1 2
+                        d1 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[3][0]) + Math.Abs(pixelptr[0][1] - pixelptr[3][1]) + Math.Abs(pixelptr[0][2] - pixelptr[3][2]);
+                        d0 += diff; //pixel 3 
+                        d3 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[4][0]) + Math.Abs(pixelptr[0][1] - pixelptr[4][1]) + Math.Abs(pixelptr[0][2] - pixelptr[4][2]);
+                        d0 += 2 * diff; //pixel 4 5
+                        d4 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[6][0]) + Math.Abs(pixelptr[0][1] - pixelptr[6][1]) + Math.Abs(pixelptr[0][2] - pixelptr[6][2]);
+                        d0 += diff; //pixel 6
+                        d6 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[0][0] - pixelptr[7][0]) + Math.Abs(pixelptr[0][1] - pixelptr[7][1]) + Math.Abs(pixelptr[0][2] - pixelptr[7][2]);
+                        d0 += 2 * diff; //pixel 7 8
+                        d7 = diff; //pixel 0
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[3][0]) + Math.Abs(pixelptr[1][1] - pixelptr[3][1]) + Math.Abs(pixelptr[1][2] - pixelptr[3][2]);
+                        d1 += diff; //pixel 3
+                        d3 += 2 * diff; //pixel 1 2
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[4][0]) + Math.Abs(pixelptr[1][1] - pixelptr[4][1]) + Math.Abs(pixelptr[1][2] - pixelptr[4][2]);
+                        d1 += 2 * diff; //pixel 4 5
+                        d4 += 2 * diff; //pixel 1 2
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[6][0]) + Math.Abs(pixelptr[1][1] - pixelptr[6][1]) + Math.Abs(pixelptr[1][2] - pixelptr[6][2]);
+                        d1 += diff; //pixel 6
+                        d6 += 2 * diff; //pixel 1 2
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[7][0]) + Math.Abs(pixelptr[1][1] - pixelptr[7][1]) + Math.Abs(pixelptr[1][2] - pixelptr[7][2]);
+                        d1 += 2 * diff; //pixel 7 8
+                        d7 += 2 * diff; //pixel 1 2
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[4][0]) + Math.Abs(pixelptr[3][1] - pixelptr[4][1]) + Math.Abs(pixelptr[3][2] - pixelptr[4][2]);
+                        d3 += 2 * diff;  //pixel 4 5
+                        d4 += diff; // pixel 3
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[6][0]) + Math.Abs(pixelptr[3][1] - pixelptr[6][1]) + Math.Abs(pixelptr[3][2] - pixelptr[6][2]);
+                        d3 += diff; //pixel 6
+                        d6 += diff; //pixel 3
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[7][0]) + Math.Abs(pixelptr[3][1] - pixelptr[7][1]) + Math.Abs(pixelptr[3][2] - pixelptr[7][2]);
+                        d3 += 2 * diff; //pixel 7 8
+                        d6 += diff; //pixel 3
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[6][0]) + Math.Abs(pixelptr[4][1] - pixelptr[6][1]) + Math.Abs(pixelptr[4][2] - pixelptr[6][2]);
+                        d4 += diff; //pixel 6
+                        d6 += 2 * diff; //pixel 4 5
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[7][0]) + Math.Abs(pixelptr[4][1] - pixelptr[7][1]) + Math.Abs(pixelptr[4][2] - pixelptr[7][2]);
+                        d4 += 2 * diff; //pixel 7 8
+                        d7 += 2 * diff; // pixel 4 5
+                        diff = Math.Abs(pixelptr[6][0] - pixelptr[7][0]) + Math.Abs(pixelptr[6][1] - pixelptr[7][1]) + Math.Abs(pixelptr[6][2] - pixelptr[7][2]);
+                        d6 += 2 * diff; //pixel 7 8
+                        d7 += diff; // pixel 6
+
+                        minH = Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(d0, d1), d3), d4), d6), d7);
+                                               
+                        if (minH == d7)
+                        {
+                            dataPtr[0] = pixelptr[7][0];
+                            dataPtr[1] = pixelptr[7][1];
+                            dataPtr[2] = pixelptr[7][2];
+                        }
+                        else if (minH == d6)
+                        {
+                            dataPtr[0] = pixelptr[6][0];
+                            dataPtr[1] = pixelptr[6][1];
+                            dataPtr[2] = pixelptr[6][2];
+                        }
+                        else if (minH == d4)
+                        {
+                            dataPtr[0] = pixelptr[4][0];
+                            dataPtr[1] = pixelptr[4][1];
+                            dataPtr[2] = pixelptr[4][2];
+                        }
+
+                        else if (minH == d3)
+                        {
+                            dataPtr[0] = pixelptr[3][0];
+                            dataPtr[1] = pixelptr[3][1];
+                            dataPtr[2] = pixelptr[3][2];
+                        }
+                        else if (minH == d1)
+                        {
+                            dataPtr[0] = pixelptr[1][0];
+                            dataPtr[1] = pixelptr[1][1];
+                            dataPtr[2] = pixelptr[1][2];
+                        }
+                        else
+                        {
+                            dataPtr[0] = pixelptr[0][0];
+                            dataPtr[1] = pixelptr[0][1];
+                            dataPtr[2] = pixelptr[0][2];
+
+                        }
+                    }
+                    //CANTO SUPERIOR ESQUERDO
+                    dataPtr = dataPtr - widthStep * (height - 1) - nChan * (width - 1);
+
+                    dataPtrAux = dataPtrOrigem;
+                    pixelptr[4] = dataPtrAux; //posição (1,1) //posição (1,2) //posição (2,1) //posição (2,2)
+                    pixelptr[5] = dataPtrAux; //posição (1,3) //posição (2,3)
+                    pixelptr[7] = dataPtrAux - nChan + widthStep; //posição (3,1) //posição (3,2)
+                    pixelptr[8] = dataPtrAux + widthStep; //posição (3,3)
+
+                    diff = Math.Abs(pixelptr[4][0] - pixelptr[5][0]) + Math.Abs(pixelptr[4][1] - pixelptr[5][1]) + Math.Abs(pixelptr[4][2] - pixelptr[5][2]);
+                    d4 = 2 * diff; //pixel 2 5
+                    d5 = 4 * diff; //pixel 0 1 3 4
+                    diff = Math.Abs(pixelptr[4][0] - pixelptr[7][0]) + Math.Abs(pixelptr[4][1] - pixelptr[7][1]) + Math.Abs(pixelptr[4][2] - pixelptr[7][2]);
+                    d4 += 2 * diff; //pixel 6 7
+                    d7 = 4 * diff; //pixel 0 1 3 4
+                    diff = Math.Abs(pixelptr[4][0] - pixelptr[8][0]) + Math.Abs(pixelptr[4][1] - pixelptr[8][1]) + Math.Abs(pixelptr[4][2] - pixelptr[8][2]);
+                    d4 += diff; //pixel 8
+                    d8 = 4 * diff; //pixel 0 1 3 4
+                    diff = Math.Abs(pixelptr[5][0] - pixelptr[7][0]) + Math.Abs(pixelptr[5][1] - pixelptr[7][1]) + Math.Abs(pixelptr[5][2] - pixelptr[7][2]);
+                    d5 += 2 * diff; //pixel 6 7
+                    d7 += 2 * diff; //pixel 2 5
+                    diff = Math.Abs(pixelptr[5][0] - pixelptr[8][0]) + Math.Abs(pixelptr[5][1] - pixelptr[8][1]) + Math.Abs(pixelptr[5][2] - pixelptr[8][2]);
+                    d5 += diff; //pixel 8
+                    d8 += 2 * diff; //pixel 2 5
+                    diff = Math.Abs(pixelptr[7][0] - pixelptr[8][0]) + Math.Abs(pixelptr[7][1] - pixelptr[8][1]) + Math.Abs(pixelptr[7][2] - pixelptr[8][2]);
+                    d7 += diff; //pixel 8
+                    d8 += 2 * diff; //pixel 6 7
+                    minH = Math.Min(Math.Min(Math.Min(d7, d8), d5), d4);
+                    if (minH == d4)
+                    {
+                        dataPtr[0] = pixelptr[4][0];
+                        dataPtr[1] = pixelptr[4][1];
+                        dataPtr[2] = pixelptr[4][2];
+                    }
+                    else if (minH == d5)
+                    {
+                        dataPtr[0] = pixelptr[5][0];
+                        dataPtr[1] = pixelptr[5][1];
+                        dataPtr[2] = pixelptr[5][2];
+                    }
+                    else if (minH == d7)
+                    {
+                        dataPtr[0] = pixelptr[7][0];
+                        dataPtr[1] = pixelptr[7][1];
+                        dataPtr[2] = pixelptr[7][2];
+                    }
+                    else 
+                    {
+                        dataPtr[0] = pixelptr[8][0];
+                        dataPtr[1] = pixelptr[8][1];
+                        dataPtr[2] = pixelptr[8][2];
+                    }
+                    //MARGEM SUPERIOR
+                    for (xdest = 0; xdest < (width - 1); xdest++)
+                    {
+                        dataPtr += nChan;
+                        dataPtrAux = dataPtrOrigem + nChan * (xdest); //penultima linha
+                        pixelptr[3] = dataPtrAux; //posição (1,1) (2,1)
+                        pixelptr[4] = dataPtrAux + nChan; //posição (1,2) (2,2)
+                        pixelptr[5] = dataPtrAux + 2 * nChan; //posição (1,3) (2,3)
+                        pixelptr[6] = dataPtrAux + widthStep; //posição (3,1)
+                        pixelptr[7] = dataPtrAux + widthStep + nChan; //posição (3,2)
+                        pixelptr[8] = dataPtrAux + widthStep + 2 * nChan; //posição (3,3)
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[4][0]) + Math.Abs(pixelptr[3][1] - pixelptr[4][1]) + Math.Abs(pixelptr[3][2] - pixelptr[4][2]);
+                        d3 = 2 * diff; //pixel 1 4
+                        d4 = 2 * diff; //pixel 0 3
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[5][0]) + Math.Abs(pixelptr[3][1] - pixelptr[5][1]) + Math.Abs(pixelptr[3][2] - pixelptr[5][2]);
+                        d3 += 2 * diff; //pixel 2 5
+                        d5 = 2 * diff; //pixel 0 3
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[6][0]) + Math.Abs(pixelptr[3][1] - pixelptr[6][1]) + Math.Abs(pixelptr[3][2] - pixelptr[6][2]);
+                        d3 += diff; //pixel 6
+                        d6 = 2 * diff; //pixel 0 3
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[7][0]) + Math.Abs(pixelptr[3][1] - pixelptr[7][1]) + Math.Abs(pixelptr[3][2] - pixelptr[7][2]);
+                        d3 += diff; //pixel 7
+                        d7 = 2 * diff; //pixel 0 3
+                        diff = Math.Abs(pixelptr[3][0] - pixelptr[8][0]) + Math.Abs(pixelptr[3][1] - pixelptr[8][1]) + Math.Abs(pixelptr[3][2] - pixelptr[8][2]);
+                        d3 += diff; //pixel 8
+                        d8 = 2 * diff; //pixel 0 3
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[5][0]) + Math.Abs(pixelptr[4][1] - pixelptr[5][1]) + Math.Abs(pixelptr[4][2] - pixelptr[5][2]);
+                        d4 += 2 * diff; //pixel 2 5
+                        d5 += 2 * diff; //pixel 1 4
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[6][0]) + Math.Abs(pixelptr[4][1] - pixelptr[6][1]) + Math.Abs(pixelptr[4][2] - pixelptr[6][2]);
+                        d4 += diff; //pixel 6
+                        d6 += 2 * diff; //pixel 1 4
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[7][0]) + Math.Abs(pixelptr[4][1] - pixelptr[7][1]) + Math.Abs(pixelptr[4][2] - pixelptr[7][2]);
+                        d4 += diff; //pixel 7
+                        d7 += 2 * diff; //pixel 1 4
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[8][0]) + Math.Abs(pixelptr[4][1] - pixelptr[8][1]) + Math.Abs(pixelptr[4][2] - pixelptr[8][2]);
+                        d4 += diff; //pixel 8
+                        d8 += 2 * diff; //pixel 1 4
+                        diff = Math.Abs(pixelptr[5][0] - pixelptr[6][0]) + Math.Abs(pixelptr[5][1] - pixelptr[6][1]) + Math.Abs(pixelptr[5][2] - pixelptr[6][2]);
+                        d5 += diff;  //pixel 6
+                        d6 += 2 * diff; // pixel 2 5
+                        diff = Math.Abs(pixelptr[5][0] - pixelptr[7][0]) + Math.Abs(pixelptr[5][1] - pixelptr[7][1]) + Math.Abs(pixelptr[5][2] - pixelptr[7][2]);
+                        d5 += diff; //pixel 7
+                        d7 += 2*diff; //pixel 2 5
+                        diff = Math.Abs(pixelptr[5][0] - pixelptr[7][0]) + Math.Abs(pixelptr[5][1] - pixelptr[7][1]) + Math.Abs(pixelptr[5][2] - pixelptr[8][2]);
+                        d5 += diff; //pixel 8
+                        d8 += 2 *diff; //pixel 2 5
+                        diff = Math.Abs(pixelptr[6][0] - pixelptr[7][0]) + Math.Abs(pixelptr[6][1] - pixelptr[7][1]) + Math.Abs(pixelptr[6][2] - pixelptr[7][2]);
+                        d6 += diff; //pixel 7
+                        d7 += diff; //pixel 6
+                        diff = Math.Abs(pixelptr[6][0] - pixelptr[8][0]) + Math.Abs(pixelptr[6][1] - pixelptr[8][1]) + Math.Abs(pixelptr[6][2] - pixelptr[8][2]);
+                        d6 += diff; //pixel 8
+                        d8 += diff; // pixel 6
+                        diff = Math.Abs(pixelptr[7][0] - pixelptr[8][0]) + Math.Abs(pixelptr[7][1] - pixelptr[8][1]) + Math.Abs(pixelptr[7][2] - pixelptr[8][2]);
+                        d7 += diff; //pixel 8
+                        d8 += diff; //pixel 7
+
+                        minH = Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(d7, d8), d6), d5), d4), d3);
+                        if (minH == d8)
+                        {
+                            dataPtr[0] = pixelptr[8][0];
+                            dataPtr[1] = pixelptr[8][1];
+                            dataPtr[2] = pixelptr[8][2];
+                        }
+                        else if (minH == d7)
+                        {
+                            dataPtr[0] = pixelptr[7][0];
+                            dataPtr[1] = pixelptr[7][1];
+                            dataPtr[2] = pixelptr[7][2];
+                        }
+                        else if (minH == d6)
+                        {
+                            dataPtr[0] = pixelptr[6][0];
+                            dataPtr[1] = pixelptr[6][1];
+                            dataPtr[2] = pixelptr[6][2];
+                        }
+                        else if (minH == d5)
+                        {
+                            dataPtr[0] = pixelptr[5][0];
+                            dataPtr[1] = pixelptr[5][1];
+                            dataPtr[2] = pixelptr[5][2];
+                        }
+                        else if (minH == d4)
+                        {
+                            dataPtr[0] = pixelptr[4][0];
+                            dataPtr[1] = pixelptr[4][1];
+                            dataPtr[2] = pixelptr[4][2];
+                        }
+                        else
+                        {
+                            dataPtr[0] = pixelptr[3][0];
+                            dataPtr[1] = pixelptr[3][1];
+                            dataPtr[2] = pixelptr[3][2];
+
+                        }
+                        
+                    }
+                    //MARGEM ESQUERDA
+                    dataPtr = dataPtr - nChan * (width - 1);
+                    for (ydest = 0; ydest < (height - 1); ydest++)
+                    {
+                        dataPtr += widthStep;
+                        dataPtrAux = dataPtrOrigem + widthStep * (ydest); //penultima linha
+                        pixelptr[1] = dataPtrAux; //posição (1,1) (1,2)
+                        pixelptr[2] = dataPtrAux + nChan; //posição (1,3)
+                        pixelptr[4] = dataPtrAux + widthStep; //posição (2,1) (2,2)
+                        pixelptr[5] = dataPtrAux + widthStep + nChan; //posição (2,3)
+                        pixelptr[7] = dataPtrAux + 2 * widthStep; //posição (3,1) (3,2)
+                        pixelptr[8] = dataPtrAux + 2 * widthStep + nChan; //posição (3,3)
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[2][0]) + Math.Abs(pixelptr[1][1] - pixelptr[2][1]) + Math.Abs(pixelptr[1][2] - pixelptr[2][2]);
+                        d1 = diff; //pixel 2
+                        d2 = 2 * diff; //pixel 0 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[4][0]) + Math.Abs(pixelptr[1][1] - pixelptr[4][1]) + Math.Abs(pixelptr[1][2] - pixelptr[4][2]);
+                        d1 += 2 * diff; //pixel 3 4
+                        d4 = 2 * diff; //pixel 0 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[5][0]) + Math.Abs(pixelptr[1][1] - pixelptr[5][1]) + Math.Abs(pixelptr[1][2] - pixelptr[5][2]);
+                        d1 += diff; //pixel 5
+                        d5 = 2 * diff; //pixel 0 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[7][0]) + Math.Abs(pixelptr[1][1] - pixelptr[7][1]) + Math.Abs(pixelptr[1][2] - pixelptr[7][2]);
+                        d1 += 2 * diff; //pixel 6 7
+                        d7 = 2 * diff; //pixel 0 1
+                        diff = Math.Abs(pixelptr[1][0] - pixelptr[8][0]) + Math.Abs(pixelptr[1][1] - pixelptr[8][1]) + Math.Abs(pixelptr[1][2] - pixelptr[8][2]);
+                        d1 += diff; //pixel 8
+                        d8 = 2 * diff; //pixel 0 1
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[4][0]) + Math.Abs(pixelptr[2][1] - pixelptr[4][1]) + Math.Abs(pixelptr[2][2] - pixelptr[4][2]);
+                        d2 += 2 * diff; //pixel 3 4
+                        d4 += diff; //pixel 2
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[5][0]) + Math.Abs(pixelptr[2][1] - pixelptr[5][1]) + Math.Abs(pixelptr[2][2] - pixelptr[5][2]);
+                        d2 += diff; //pixel 5
+                        d5 += diff; //pixel 2
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[7][0]) + Math.Abs(pixelptr[2][1] - pixelptr[7][1]) + Math.Abs(pixelptr[2][2] - pixelptr[7][2]);
+                        d2 += 2 * diff; //pixel 6 7
+                        d7 += diff; //pixel 2
+                        diff = Math.Abs(pixelptr[2][0] - pixelptr[8][0]) + Math.Abs(pixelptr[2][1] - pixelptr[8][1]) + Math.Abs(pixelptr[2][2] - pixelptr[8][2]);
+                        d2 += diff; //pixel 8
+                        d8 += diff; //pixel 2
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[5][0]) + Math.Abs(pixelptr[4][1] - pixelptr[5][1]) + Math.Abs(pixelptr[4][2] - pixelptr[5][2]);
+                        d4 += diff;  //pixel 5
+                        d5 += 2 * diff; // pixel 3 4
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[7][0]) + Math.Abs(pixelptr[4][1] - pixelptr[7][1]) + Math.Abs(pixelptr[4][2] - pixelptr[7][2]);
+                        d4 += 2 * diff; //pixel 6 7
+                        d7 += 2 *  diff; //pixel 3 4
+                        diff = Math.Abs(pixelptr[4][0] - pixelptr[8][0]) + Math.Abs(pixelptr[4][1] - pixelptr[8][1]) + Math.Abs(pixelptr[4][2] - pixelptr[8][2]);
+                        d4 += diff; //pixel 8
+                        d8 += 2 * diff; //pixel 3 4
+                        diff = Math.Abs(pixelptr[5][0] - pixelptr[7][0]) + Math.Abs(pixelptr[5][1] - pixelptr[7][1]) + Math.Abs(pixelptr[5][2] - pixelptr[7][2]);
+                        d5 += 2 * diff; //pixel 6 7
+                        d7 += diff; //pixel 5
+                        diff = Math.Abs(pixelptr[5][0] - pixelptr[8][0]) + Math.Abs(pixelptr[5][1] - pixelptr[8][1]) + Math.Abs(pixelptr[5][2] - pixelptr[8][2]);
+                        d5 += diff; //pixel 8
+                        d8 += diff; // pixel 5
+                        diff = Math.Abs(pixelptr[7][0] - pixelptr[8][0]) + Math.Abs(pixelptr[7][1] - pixelptr[8][1]) + Math.Abs(pixelptr[7][2] - pixelptr[8][2]);
+                        d7 += diff; //pixel 8
+                        d8 += 2 * diff; // pixel 6 7
+
+                        minH = Math.Min(Math.Min(Math.Min(Math.Min(Math.Min(d2, d1), d4), d5), d7), d8);
+
+                        if (minH == d8)
+                        {
+                            dataPtr[0] = pixelptr[8][0];
+                            dataPtr[1] = pixelptr[8][1];
+                            dataPtr[2] = pixelptr[8][2];
+                        }
+                        else if (minH == d7)
+                        {
+                            dataPtr[0] = pixelptr[7][0];
+                            dataPtr[1] = pixelptr[7][1];
+                            dataPtr[2] = pixelptr[7][2];
+                        }
+                        else if (minH == d5)
+                        {
+                            dataPtr[0] = pixelptr[5][0];
+                            dataPtr[1] = pixelptr[5][1];
+                            dataPtr[2] = pixelptr[5][2];
+                        }
+
+                        else if (minH == d4)
+                        {
+                            dataPtr[0] = pixelptr[4][0];
+                            dataPtr[1] = pixelptr[4][1];
+                            dataPtr[2] = pixelptr[4][2];
+                        }
+                        else if (minH == d2)
+                        {
+                            dataPtr[0] = pixelptr[2][0];
+                            dataPtr[1] = pixelptr[2][1];
+                            dataPtr[2] = pixelptr[2][2];
+                        }
+                        else
+                        {
+                            dataPtr[0] = pixelptr[1][0];
+                            dataPtr[1] = pixelptr[1][1];
+                            dataPtr[2] = pixelptr[1][2];
+
+                        }
+                    }
+
+
+                }//end of if channel
+            }
+        }
