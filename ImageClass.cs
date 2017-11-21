@@ -11,6 +11,15 @@ using AForge.Math.Geometry;
 using AForge;
 using AForge.Imaging.Filters;
 
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Windows.Forms;
+using System.Reflection;
+
+
 namespace SS_OpenCV
 {
     class ImageClass
@@ -727,13 +736,14 @@ namespace SS_OpenCV
                 Roberts(img, imgCopy);
                 ConvertToBW(img, 20);
                 MIplImage m = img.MIplImage;
-                //MIplImage morigem = imgUndo.MIplImage;
+                MIplImage morigem = imgCopy.MIplImage;
                 byte* dataPtr = (byte*)m.imageData.ToPointer(); // Pointer to the image
                 byte blue, green, red;
-                //byte* dataPtrAux;
-                //byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
+                byte* dataPtrAux;
+                byte* dataPtrOrigem = (byte*)morigem.imageData.ToPointer();
                 int width = img.Width;
                 int height = img.Height;
+                int widthStep = m.widthStep;
                 int nChan = m.nChannels; // number of channels - 3
                 int padding = m.widthStep - m.nChannels * m.width; // alinhament bytes (padding)
                 int x, y;
@@ -741,66 +751,175 @@ namespace SS_OpenCV
                 int y0 = 0;
                 int x1 = 0;
                 int y1 = 0;
+                int x2 = 0;
+                int y2 = 0;
 
+                Image<Bgr, byte> lineImage = img.CopyBlank();
+                // create an instance of blob counter algorithm
+                BlobCounter bc = new BlobCounter();
+                // process binary image
+                bc.ProcessImage(img.Bitmap);
+                Blob[] blobs = bc.GetObjectsInformation();
+                // create Graphics object to draw on the image and a pen
+                Graphics g = Graphics.FromImage(img.Bitmap);
+               
                 Boolean xbreak = false;
-                bool canto1 = false;
-                bool canto2 = false;
-                int chessWidth = 0;
+                //-----------------------------------------------------------------------------------------
+                int xorigem, yorigem, xdest, ydest;
 
-                if (nChan == 3) // image in RGB
+                Rectangle[] rects = bc.GetObjectsRectangles();
+                ////process blobs
+                int chessBoardWidth = 0;
+                int chessBoardHeight = 0;
+                int chessBoardx0 = 0;
+                int chessBoardy0 = 0;
+
+                
+                double deltaX, deltaY,  radians;
+                double angle = 0.0;
+                double distance = 0.0;
+                if (nChan == 3)
+
                 {
-                    
-
-                    for (y = 0; y < height; y++)
+                    //PRIMEIRA PASSAGEM LEFT TO RIGHT, TOP DOWN
+                    for (ydest = 0; ydest < height; ydest++)
                     {
-                        for (x = 0; x < width; x++)
+                        for (xdest = 0; xdest < width; xdest++)
                         {
-                            blue = dataPtr[0];
-                            green = dataPtr[1];
-                            red = dataPtr[2];
-
-                            dataPtr[0] = 0;
-                            dataPtr[1] = 0;
-                            dataPtr[2] = 0;
-
-                            if (!canto1 && blue >= 250 && green >= 250 && green >= 250)
-                            {
-                                x0 = x;
-                                y0 = y;
-                                canto1 = true;
-                                
-                                
-                            } if(canto1 && !canto2)
-                            {
-                                chessWidth++;
-                            }    
-                            
-                            if (canto1 && blue <= 10 && green <= 10 && green <= 10)
-                            {
-                                canto2 = true;
-                                x1 = x;
-                                y1 = y;
+                            //dataPtrAux = (ydest * widthStep + xdest * nChan + dataPtrOrigem);
+                            //dataPtr[0] = 0;
+                            if (dataPtr[0] >= 100 && dataPtr[1] >= 100 && dataPtr[2] >= 100)
+                            { //ENCONTRA O CANTO MAIS ELEVADO NA IMAGEM E SEGUE PARA A SEGUNDA PASSAGEM
+                                x0 = xdest;
+                                y0 = ydest;
                                 xbreak = true;
                                 break;
                             }
-                           
-                            // advance the pointer to the next pixel
                             dataPtr += nChan;
                             
                         }
-                        if (xbreak)
+                        if (!xbreak)
                         {
-                            xbreak = false;
-                            break;
+                            dataPtr += padding;
+                            
                         }
-                        //at the end of the line advance the pointer by the aligment bytes (padding)
-                        dataPtr += padding;
+                        else { Debug.WriteLine(x0 + " " + y0); xbreak = false; break; }
                     }
-                    Debug.WriteLine(x0 + " " + y0 + " " + x1 + " " + y1 + " " + chessWidth + " " + (x1-x0));
-                    //chessWidth = x1 - y1;
+                    
+                    dataPtr -= ((x0 * nChan) + (y0 * widthStep)); //POINTER NO INÍCIO DA IMAGEM
+                    dataPtr += (((width - 1) * nChan) + ((height - 1) * widthStep)); //POINTER NO FIM DA IMAGEM
+
+                    //SEGUNDA PASSAGEM RIGHT TO LEFT, BOTTOM UP
+                    for (ydest = height - 1; ydest >= 0; ydest--)
+                    {
+                        for (xdest = width - 1; xdest >= 0; xdest--)
+                        {
+
+                            if (dataPtr[0] >= 200 && dataPtr[1] >= 200 && dataPtr[2] >= 200)
+                            {//ENCONTRA O CANTO MAIS BAIXO NA IMAGEM E SEGUE PARA A TERCEIRA PASSAGEM CASO X0 > X1
+                                x1 = xdest;
+                                y1 = ydest;
+                                xbreak = true;
+                                break;
+                            }
+                            dataPtr -= nChan;
+
+                        }
+                        if (!xbreak)
+                        {
+                            dataPtr += padding;
+                        }
+                        else { Debug.WriteLine(x1 + " " + y1);  xbreak = false; break; }
+
+                    }
+                    if (x0 < x1)//TRUE QUANDO O TABULEIRO RODOU NO SENTIDO HORÁRIO
+                    {
+                        chessBoardx0 = x0;
+                        chessBoardy0 = y0;
+                        //TERCEIRA PASSAGEM (A) RIGHT TO LEFT, TOP DOWN
+                            for (ydest = 0; ydest < height; ydest++)
+                            {
+                                for (xdest = width - 1; xdest >= 0; xdest--)
+                                {
+                                    if (dataPtr[0] >= 100 && dataPtr[1] >= 100 && dataPtr[2] >= 100)
+                                    { //ENCONTRA O CANTO SUPERIOR ESQUERDO OU DIREITO DA IMAGEM
+                                        if(y0 == ydest)//superior direito
+                                    {
+                                        x2 = xdest;
+                                        y2 = ydest;
+                                    }
+                                        y0 = ydest;
+                                        xbreak = true;
+                                        break;
+                                    }
+                                    dataPtr -= nChan;
+
+                                }
+                                if (!xbreak)
+                                {
+                                    dataPtr += padding + widthStep + (width-1)*nChan;
+
+                                }
+                                else { Debug.WriteLine(x0 + " " + y0); xbreak = false; break; }
+                            }
+
+                        //calculate delta x and delta y between the two points
+                        deltaX = Math.Pow((x0 - chessBoardx0), 2);
+                        deltaY = Math.Pow((y0 - chessBoardy0), 2);
+
+                        //pythagras theorem for distance
+                        distance = Math.Sqrt(deltaY + deltaX);
+
+                        //atan2 for angle
+                        radians = Math.Atan2((y0 - chessBoardy0), (x0 - chessBoardx0)); // Don't use squared delta
+
+                        //radians into degrees
+                        angle = radians * (180 / Math.PI);
+                    }
+                    else if (x0 > x1) //TRUE QUANDO O TABULEIRO RODOU NO SENTIDO ANTI-HORÁRIO
+                    {//TERCEIRA PASSAGEM BOTTOM UP, LEFT TO RIGHT
+
+                        dataPtr -= ((x1 * nChan) + (y1 * widthStep)); //POINTER NO INÍCIO DA IMAGEM 
+
+                        for (xdest = 0; xdest < width; xdest++)
+                        {
+                            for (ydest = 0; ydest < height; ydest++)
+                            {
+                                if (dataPtr[0] >= 220 && dataPtr[1] >= 220 && dataPtr[2] >= 220)
+                                {
+                                    chessBoardx0 = xdest;
+                                    chessBoardy0 = ydest;
+                                    xbreak = true;
+                                    break;
+                                }
+
+                                dataPtr += widthStep;
+
+                            }
+
+                            if (!xbreak)
+                            {
+                                dataPtr += nChan - (height - 1) * widthStep;
+
+                            }
+                            else { xbreak = false; break; }
+                        }
+                        //calculate delta x and delta y between the two points
+                         deltaX = Math.Pow((x0 - chessBoardx0), 2);
+                         deltaY = Math.Pow((y0 - chessBoardy0), 2);
+
+                        //pythagras theorem for distance
+                         distance = Math.Sqrt(deltaY + deltaX);
+
+                        //atan2 for angle
+                         radians = Math.Atan2((y0 - chessBoardy0), (x0 - chessBoardx0)); // Don't use squared delta
+
+                        //radians into degrees
+                         angle = radians * (180 / Math.PI);
+                    }
+                    
                 }
-                   
-                    string[,] tmp = new string[8, 8];
+                     string[,] tmp = new string[8, 8];
 
                     for (int i = 0; i < 8; i++)
                     {
@@ -809,12 +928,41 @@ namespace SS_OpenCV
                             tmp[j, i] = "K_w";
                         }
                     }
-               
-                Pieces = tmp;
-                Angle = 48.ToString();
-                BD_Location = new Rectangle(x0, y0, chessWidth-2, 1000);
+
+                    Pieces = tmp;
+                    Angle = angle.ToString();
+                    BD_Location = new Rectangle(chessBoardx0, chessBoardy0, (int)distance, 50);
+
+                ////calculate delta x and delta y between the two points
+                //var deltaX = Math.Pow((X2 - X1), 2);
+                //var deltaY = Math.Pow((Y2 - Y1), 2);
+
+                ////pythagras theorem for distance
+                //var distance = Math.Sqrt(deltaY + deltaX);
+
+                ////atan2 for angle
+                //var radians = Math.Atan2((Y2 - Y1), (X2 - X1)); // Don't use squared delta
+
+                ////radians into degrees
+                //var angle = radians * (180 / Math.PI);
+
+                //---------------------------------------------------------------------------
+
+
+                // }
+
             }
-            
+        }
+        private System.Drawing.Point[] ToPointsArray(List<IntPoint> points)
+        {
+            System.Drawing.Point[] array = new System.Drawing.Point[points.Count];
+
+            for (int i = 0, n = points.Count; i < n; i++)
+            {
+                array[i] = new System.Drawing.Point(points[i].X, points[i].Y);
+            }
+
+            return array;
         }
 
         public static void Mean_solutionB(Image<Bgr, byte> img, Image<Bgr, byte> imgUndo)
